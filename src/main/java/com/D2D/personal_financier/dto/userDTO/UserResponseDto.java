@@ -1,7 +1,16 @@
 package com.D2D.personal_financier.dto.userDTO;
 
-public record UserResponseDto(
+import com.D2D.personal_financier.entity.enums.Role;
+
+import java.time.LocalDateTime;
+
+public record UserResponseDto (
         Long id,
         String username,
-        String email
+        String email,
+        Boolean verified,
+        Boolean active,
+        Role role,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {}

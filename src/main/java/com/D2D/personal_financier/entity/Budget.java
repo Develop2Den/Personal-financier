@@ -4,9 +4,11 @@ import com.D2D.personal_financier.entity.enums.BudgetPeriod;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "budgets")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -16,7 +18,7 @@ public class Budget {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Double limitAmount;
+    private BigDecimal limitAmount;
 
     private LocalDate startDate;
 

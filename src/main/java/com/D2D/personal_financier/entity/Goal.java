@@ -4,9 +4,11 @@ import com.D2D.personal_financier.entity.enums.GoalStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "goals")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +20,9 @@ public class Goal {
 
     private String name;
 
-    private Double targetAmount;
+    private BigDecimal targetAmount;
 
-    private Double currentAmount = 0.0;
+    private BigDecimal currentAmount = BigDecimal.ZERO;
 
     private LocalDate deadline;
 
