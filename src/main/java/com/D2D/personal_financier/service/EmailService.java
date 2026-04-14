@@ -17,22 +17,22 @@ public class EmailService {
 
     public void sendVerificationEmail(String to, String token) {
 
-        String subject = "Подтверждение регистрации";
-
         String verificationUrl =
-                baseUrl + "/auth/verify-email?token=" + token;
-
-        String message =
-                "Привет!\n\n" +
-                        "Пожалуйста, подтвердите регистрацию:\n" +
-                        verificationUrl + "\n\n" +
-                        "Ссылка действует 24 часа.";
+            baseUrl + "/auth/verify-email?token=" + token;
 
         SimpleMailMessage mailMessage = new SimpleMailMessage();
 
+        mailMessage.setFrom("FinalProjectLinkedin@gmail.com");
         mailMessage.setTo(to);
-        mailMessage.setSubject(subject);
-        mailMessage.setText(message);
+        mailMessage.setSubject("Registration Confirmation");
+        mailMessage.setText(
+            "Hello,\n\n" +
+                "Thank you for registering.\n\n" +
+                "Please confirm your email address by clicking the link below:\n" +
+                verificationUrl + "\n\n" +
+                "This verification link will expire in 24 hours.\n\n" +
+                "If you did not create this account, you can safely ignore this email."
+        );
 
         mailSender.send(mailMessage);
     }

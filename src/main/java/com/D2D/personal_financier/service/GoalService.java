@@ -1,11 +1,13 @@
 package com.D2D.personal_financier.service;
 
-import com.D2D.personal_financier.config.security.SecurityUtils;
+import com.D2D.personal_financier.config.security.utils.HtmlSanitizerService;
+import com.D2D.personal_financier.config.security.utils.SecurityUtils;
 import com.D2D.personal_financier.dto.goalDTO.GoalRequestDto;
 import com.D2D.personal_financier.dto.goalDTO.GoalResponseDto;
 import com.D2D.personal_financier.entity.Goal;
 import com.D2D.personal_financier.entity.User;
 import com.D2D.personal_financier.entity.enums.GoalStatus;
+import com.D2D.personal_financier.exception.GoalNotFoundException;
 import com.D2D.personal_financier.mapper.GoalMapper;
 import com.D2D.personal_financier.repository.GoalRepository;
 import jakarta.transaction.Transactional;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +25,15 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final GoalMapper goalMapper;
     private final SecurityUtils securityUtils;
+    private final HtmlSanitizerService sanitizer;
 
     public GoalResponseDto createGoal(GoalRequestDto dto) {
 
         Goal goal = goalMapper.toEntity(dto);
+
+        goal.setName(
+            sanitizer.sanitize(dto.name())
+        );
 
         User user = securityUtils.getCurrentUser();
 
@@ -52,16 +58,20 @@ public class GoalService {
 
     public GoalResponseDto getGoalById(Long id) {
 
-        Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new GoalNotFoundException(id));
 
         return goalMapper.toDto(goal);
     }
 
     public GoalResponseDto updateGoal(Long id, GoalRequestDto dto) {
 
-        Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new GoalNotFoundException(id));
 
         goal.setName(dto.name());
         goal.setTargetAmount(dto.targetAmount());
@@ -74,8 +84,10 @@ public class GoalService {
 
     public void deleteGoal(Long id) {
 
-        Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new GoalNotFoundException(id));
 
         goalRepository.delete(goal);
     }

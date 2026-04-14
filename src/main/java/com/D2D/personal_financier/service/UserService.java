@@ -1,36 +1,45 @@
 package com.D2D.personal_financier.service;
 
+import com.D2D.personal_financier.config.security.utils.SecurityUtils;
+import com.D2D.personal_financier.config.security.utils.LoginAttemptService;
 import com.D2D.personal_financier.config.security.jwt.JwtProvider;
 import com.D2D.personal_financier.dto.authDTO.AuthResponseDto;
 import com.D2D.personal_financier.dto.authDTO.RegisterRequestDto;
+import com.D2D.personal_financier.dto.message.MessageResponseDto;
 import com.D2D.personal_financier.dto.userDTO.UserRequestDto;
 import com.D2D.personal_financier.dto.userDTO.UserResponseDto;
 import com.D2D.personal_financier.entity.User;
+import com.D2D.personal_financier.exception.EmailNotVerifiedException;
+import com.D2D.personal_financier.exception.InvalidCredentialsException;
+import com.D2D.personal_financier.exception.EmailAlreadyRegisteredException;
+import com.D2D.personal_financier.exception.TooManyAttemptsException;
+import com.D2D.personal_financier.exception.UserNotFoundException;
+import com.D2D.personal_financier.exception.UsernameAlreadyTakenException;
 import com.D2D.personal_financier.mapper.UserMapper;
 import com.D2D.personal_financier.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private final EmailVerificationService emailVerificationService;
+    private final LoginAttemptService loginAttemptService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailVerificationService emailVerificationService;
     private final EmailService emailService;
     private final JwtProvider jwtProvider;
     private final UserMapper userMapper;
+    private final SecurityUtils securityUtils;
 
-    public AuthResponseDto register(RegisterRequestDto request) {
+    public MessageResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new RuntimeException("Username already taken");
+            throw new UsernameAlreadyTakenException(request.username());
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Email already registered");
+            throw new EmailAlreadyRegisteredException(request.email());
         }
 
 
@@ -44,53 +53,98 @@ public class UserService {
         String emailToken = emailVerificationService.generateToken(user);
         emailService.sendVerificationEmail(user.getEmail(), emailToken);
 
-        String token = jwtProvider.generateToken(user.getUsername());
-        return new AuthResponseDto(token);
+        return new MessageResponseDto(
+                "Registration successful. Please check your email and verify it before logging in."
+        );
     }
 
     public AuthResponseDto login(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        if (loginAttemptService.isBlocked(username)) {
+            throw new TooManyAttemptsException();
         }
 
-        String token = jwtProvider.generateToken(user.getUsername());
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> {
+                loginAttemptService.loginFailed(username);
+                return new InvalidCredentialsException();
+            });
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            loginAttemptService.loginFailed(username);
+            throw new InvalidCredentialsException();
+        }
+
+        if (!Boolean.TRUE.equals(user.getVerified())) {
+            throw new EmailNotVerifiedException();
+        }
+
+        loginAttemptService.loginSucceeded(username);
+
+        String token = jwtProvider.generateToken(user);
+
         return new AuthResponseDto(token);
     }
 
+    public UserResponseDto getCurrentUser() {
+        User currentUser = securityUtils.getCurrentUser();
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new UserNotFoundException(currentUser.getId()));
 
-    public UserResponseDto createUser(UserRequestDto dto) {
-        User user = userMapper.toEntity(dto);
-        userRepository.save(user);
         return userMapper.toDto(user);
     }
 
-    public List<UserResponseDto> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(userMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
     public UserResponseDto getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getCurrentUserById(id);
+
         return userMapper.toDto(user);
     }
 
     public UserResponseDto updateUser(Long id, UserRequestDto dto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getCurrentUserById(id);
+
+        validateUniqueUserFields(dto.username(), dto.email(), user.getId());
+
         user.setUsername(dto.username());
         user.setEmail(dto.email());
-        user.setPassword(dto.password());
+        user.setPassword(passwordEncoder.encode(dto.password()));
         userRepository.save(user);
+
         return userMapper.toDto(user);
     }
 
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        User user = getCurrentUserById(id);
+        userRepository.delete(user);
+    }
+
+    private User getCurrentUserById(Long id) {
+        User currentUser = securityUtils.getCurrentUser();
+
+        if (!currentUser.getId().equals(id)) {
+            throw new UserNotFoundException(id);
+        }
+
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+    }
+
+    private void validateUniqueUserFields(String username, String email, Long userId) {
+        boolean usernameTaken = userId == null
+                ? userRepository.existsByUsername(username)
+                : userRepository.existsByUsernameAndIdNot(username, userId);
+
+        if (usernameTaken) {
+            throw new UsernameAlreadyTakenException(username);
+        }
+
+        boolean emailTaken = userId == null
+                ? userRepository.existsByEmail(email)
+                : userRepository.existsByEmailAndIdNot(email, userId);
+
+        if (emailTaken) {
+            throw new EmailAlreadyRegisteredException(email);
+        }
     }
 }
 

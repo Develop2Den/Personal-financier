@@ -1,11 +1,13 @@
 package com.D2D.personal_financier.service;
 
-import com.D2D.personal_financier.config.security.SecurityUtils;
+import com.D2D.personal_financier.config.security.utils.SecurityUtils;
 import com.D2D.personal_financier.dto.budgetDTO.BudgetRequestDto;
 import com.D2D.personal_financier.dto.budgetDTO.BudgetResponseDto;
 import com.D2D.personal_financier.entity.Budget;
 import com.D2D.personal_financier.entity.Category;
 import com.D2D.personal_financier.entity.User;
+import com.D2D.personal_financier.exception.BudgetNotFoundException;
+import com.D2D.personal_financier.exception.CategoryNotFoundException;
 import com.D2D.personal_financier.mapper.BudgetMapper;
 import com.D2D.personal_financier.repository.BudgetRepository;
 import com.D2D.personal_financier.repository.CategoryRepository;
@@ -13,7 +15,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +28,12 @@ public class BudgetService {
 
     public BudgetResponseDto createBudget(BudgetRequestDto dto) {
 
-        Category category = categoryRepository.findById(dto.categoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Category category = categoryRepository.findByIdAndOwnerId(dto.categoryId(), user.getId())
+                .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         Budget budget = budgetMapper.toEntity(dto);
-
-        User user = securityUtils.getCurrentUser();
 
         budget.setOwner(user);
         budget.setCategory(category);
@@ -54,19 +55,23 @@ public class BudgetService {
 
     public BudgetResponseDto getBudgetById(Long id) {
 
-        Budget budget = budgetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Budget budget = budgetRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new BudgetNotFoundException(id));
 
         return budgetMapper.toDto(budget);
     }
 
     public BudgetResponseDto updateBudget(Long id, BudgetRequestDto dto) {
 
-        Budget budget = budgetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        User user = securityUtils.getCurrentUser();
 
-        Category category = categoryRepository.findById(dto.categoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+        Budget budget = budgetRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new BudgetNotFoundException(id));
+
+        Category category = categoryRepository.findByIdAndOwnerId(dto.categoryId(), user.getId())
+                .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         budget.setCategory(category);
         budget.setLimitAmount(dto.limitAmount());
@@ -81,8 +86,10 @@ public class BudgetService {
 
     public void deleteBudget(Long id) {
 
-        Budget budget = budgetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        User user = securityUtils.getCurrentUser();
+
+        Budget budget = budgetRepository.findByIdAndOwnerId(id, user.getId())
+                .orElseThrow(() -> new BudgetNotFoundException(id));
 
         budgetRepository.delete(budget);
     }

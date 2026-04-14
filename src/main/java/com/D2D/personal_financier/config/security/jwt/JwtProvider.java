@@ -1,10 +1,18 @@
 package com.D2D.personal_financier.config.security.jwt;
 
+import com.D2D.personal_financier.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -16,24 +24,58 @@ public class JwtProvider {
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    public String generateToken(String username) {
+    private SecretKey getSigningKey() {
+
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateToken(User user) {
+
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS256, jwtSecret)
-                .compact();
+            .subject(user.getUsername())
+            .claim("userId", user.getId())
+            .claim("role", user.getRole().name())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+            .signWith(getSigningKey())
+            .compact();
+    }
+
+    public Claims getClaims(String token) {
+
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     public String getUsernameFromToken(String token) {
-        return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
+        return getClaims(token).getSubject();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        return getClaims(token).get("userId", Long.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        return getClaims(token).get("role", String.class);
     }
 
     public boolean validateToken(String token) {
+
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
+
+            Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+
             return true;
-        } catch (Exception e) {
+
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }

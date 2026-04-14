@@ -18,13 +18,17 @@ public class Budget {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "limit_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal limitAmount;
 
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private BudgetPeriod period;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,7 +36,7 @@ public class Budget {
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 }
 

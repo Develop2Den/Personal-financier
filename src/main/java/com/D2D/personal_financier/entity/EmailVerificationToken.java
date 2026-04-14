@@ -20,7 +20,7 @@ public class EmailVerificationToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String token;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -28,6 +28,7 @@ public class EmailVerificationToken {
     private User owner;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean isLive = true;
 
     @Column(nullable = false)

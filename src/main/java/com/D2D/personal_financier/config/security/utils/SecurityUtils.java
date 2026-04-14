@@ -1,4 +1,4 @@
-package com.D2D.personal_financier.config.security;
+package com.D2D.personal_financier.config.security.utils;
 
 import com.D2D.personal_financier.entity.User;
 import org.springframework.security.core.Authentication;

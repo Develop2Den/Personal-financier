@@ -1,6 +1,6 @@
 package com.D2D.personal_financier.service;
 
-import com.D2D.personal_financier.config.security.SecurityUtils;
+import com.D2D.personal_financier.config.security.utils.SecurityUtils;
 import com.D2D.personal_financier.dto.analytics.CategoryReportDto;
 import com.D2D.personal_financier.dto.analytics.DashboardDto;
 import com.D2D.personal_financier.dto.analytics.MonthlyExpenseDto;

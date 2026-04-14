@@ -18,19 +18,23 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal targetAmount;
 
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal currentAmount = BigDecimal.ZERO;
 
     private LocalDate deadline;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private GoalStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 }
 
