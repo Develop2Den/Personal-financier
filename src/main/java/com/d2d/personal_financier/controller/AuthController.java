@@ -1,6 +1,11 @@
 package com.d2d.personal_financier.controller;
 
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
+import com.d2d.personal_financier.config.security.jwt.JwtProvider;
+import com.d2d.personal_financier.dto.authDTO.LogoutRequestDto;
+import com.d2d.personal_financier.dto.authDTO.PasswordResetConfirmDto;
+import com.d2d.personal_financier.dto.authDTO.PasswordResetRequestDto;
+import com.d2d.personal_financier.dto.authDTO.RefreshTokenRequestDto;
 import com.d2d.personal_financier.dto.LoginDto.LoginRequestDto;
 import com.d2d.personal_financier.dto.authDTO.AuthResponseDto;
 import com.d2d.personal_financier.dto.authDTO.RegisterRequestDto;
@@ -8,6 +13,9 @@ import com.d2d.personal_financier.dto.error.ErrorResponse;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
 import com.d2d.personal_financier.dto.tokenDTO.ResendVerificationRequestDto;
 import com.d2d.personal_financier.service.EmailVerificationService;
+import com.d2d.personal_financier.service.AuditService;
+import com.d2d.personal_financier.service.PasswordResetService;
+import com.d2d.personal_financier.service.RefreshTokenService;
 import com.d2d.personal_financier.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,13 +38,20 @@ public class AuthController {
 
     private final EmailVerificationService emailVerificationService;
     private final JwtBlacklistService jwtBlacklistService;
+    private final JwtProvider jwtProvider;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
+    private final PasswordResetService passwordResetService;
+    private final AuditService auditService;
 
     private static final String REGISTER = "/register";
     private static final String LOGIN = "/login";
     private static final String LOGOUT = "/logout";
+    private static final String REFRESH = "/refresh";
     private static final String RESEND = "/resend-verification";
     private static final String VERIFY = "/verify-email";
+    private static final String PASSWORD_RESET = "/password-reset";
+    private static final String PASSWORD_RESET_CONFIRM = "/password-reset/confirm";
 
     @Operation(
         summary = "Register a new user",
@@ -152,6 +167,27 @@ public class AuthController {
     }
 
     @Operation(
+        summary = "Refresh access token",
+        description = "Rotates the refresh token and returns a new token pair"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token pair refreshed successfully"),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Refresh token is invalid, revoked or expired",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
+    })
+    @PostMapping(REFRESH)
+    public ResponseEntity<AuthResponseDto> refresh(
+        @Valid @RequestBody RefreshTokenRequestDto request) {
+
+        return ResponseEntity.ok(
+            refreshTokenService.refresh(request.refreshToken())
+        );
+    }
+
+    @Operation(
         summary = "Logout user",
         description = "Invalidate user session on client side"
     )
@@ -159,18 +195,83 @@ public class AuthController {
         @ApiResponse(responseCode = "204", description = "User logged out successfully")
     })
     @PostMapping(LOGOUT)
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
+    public ResponseEntity<Void> logout(
+        HttpServletRequest request,
+        @RequestBody(required = false) LogoutRequestDto logoutRequest) {
 
         String authHeader = request.getHeader("Authorization");
+        String principal = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
 
             jwtBlacklistService.blacklistToken(token);
+
+            if (jwtProvider.validateToken(token)) {
+                principal = jwtProvider.getUsernameFromToken(token);
+            }
         }
 
+        if (logoutRequest != null) {
+            refreshTokenService.revoke(logoutRequest.refreshToken());
+        }
+
+        auditService.log("LOGOUT", "SUCCESS", null, principal, "Logout completed");
+
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Request password reset",
+        description = "Sends password reset instructions if the account exists"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Password reset request accepted"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid input data",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
+    })
+    @PostMapping(PASSWORD_RESET)
+    public ResponseEntity<MessageResponseDto> requestPasswordReset(
+        @Valid @RequestBody PasswordResetRequestDto request) {
+
+        return ResponseEntity.ok(
+            passwordResetService.requestReset(request.email())
+        );
+    }
+
+    @Operation(
+        summary = "Confirm password reset",
+        description = "Sets a new password using a valid password reset token"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Password reset completed"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid reset token or password policy violation",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Reset token has already been used",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "410",
+            description = "Reset token has expired",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
+    })
+    @PostMapping(PASSWORD_RESET_CONFIRM)
+    public ResponseEntity<MessageResponseDto> confirmPasswordReset(
+        @Valid @RequestBody PasswordResetConfirmDto request) {
+
+        return ResponseEntity.ok(
+            passwordResetService.confirmReset(request)
+        );
     }
 
 }

@@ -36,5 +36,27 @@ public class EmailService {
 
         mailSender.send(mailMessage);
     }
+
+    public void sendPasswordResetEmail(String to, String token) {
+
+        String resetUrl =
+            baseUrl + "/auth/password-reset/confirm?token=" + token;
+
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+
+        mailMessage.setFrom("FinalProjectLinkedin@gmail.com");
+        mailMessage.setTo(to);
+        mailMessage.setSubject("Password Reset Request");
+        mailMessage.setText(
+            "Hello,\n\n" +
+                "We received a request to reset your password.\n\n" +
+                "Use the link below to choose a new password:\n" +
+                resetUrl + "\n\n" +
+                "This reset link will expire in 1 hour.\n\n" +
+                "If you did not request a password reset, you can safely ignore this email."
+        );
+
+        mailSender.send(mailMessage);
+    }
 }
 

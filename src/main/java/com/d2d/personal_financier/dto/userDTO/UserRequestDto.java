@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.d2d.personal_financier.validation.ValidPassword;
 
 @Schema(description = "Request for creating or updating a user")
 public record UserRequestDto(
@@ -25,10 +26,7 @@ public record UserRequestDto(
     String email,
 
     @NotBlank(message = "Password is required")
-    @Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{8,}$",
-        message = "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character"
-    )
+    @ValidPassword
     @Schema(
         description = "Secure password",
         example = "MyPass123!"

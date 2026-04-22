@@ -23,6 +23,7 @@ public class EmailVerificationService {
     private final EmailService emailService;
     private final EmailVerificationTokenRepository tokenRepository;
     private final UserRepository userRepository;
+    private final AuditService auditService;
 
     public String generateToken(User owner) {
 
@@ -48,12 +49,14 @@ public class EmailVerificationService {
         User user = userRepository.findByEmail(email).orElse(null);
 
         if (user == null) {
+            auditService.log("VERIFICATION_RESEND", "IGNORED", null, email, "Verification resend requested for unknown email");
             return new MessageResponseDto(
                 "If an account with this email exists and is not verified, a new verification email has been sent."
             );
         }
 
         if (Boolean.TRUE.equals(user.getVerified())) {
+            auditService.log("VERIFICATION_RESEND", "IGNORED", user, user.getUsername(), "Verification resend requested for verified account");
             return new MessageResponseDto(
                 "Email is already verified. You can log in."
             );
@@ -61,6 +64,7 @@ public class EmailVerificationService {
 
         String emailToken = generateToken(user);
         emailService.sendVerificationEmail(user.getEmail(), emailToken);
+        auditService.log("VERIFICATION_RESEND", "SUCCESS", user, user.getUsername(), "Verification email resent");
 
         return new MessageResponseDto(
             "A new verification email has been sent. Please check your inbox."
@@ -87,9 +91,9 @@ public class EmailVerificationService {
         user.setVerified(true);
 
         userRepository.save(user);
+        auditService.log("EMAIL_VERIFICATION", "SUCCESS", user, user.getUsername(), "Email verified");
 
         tokenRepository.delete(verificationToken);
     }
 }
-
 

@@ -2,7 +2,6 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.config.security.utils.LoginAttemptService;
-import com.d2d.personal_financier.config.security.jwt.JwtProvider;
 import com.d2d.personal_financier.dto.authDTO.AuthResponseDto;
 import com.d2d.personal_financier.dto.authDTO.RegisterRequestDto;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
@@ -30,9 +29,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final JwtProvider jwtProvider;
     private final UserMapper userMapper;
     private final SecurityUtils securityUtils;
+    private final RefreshTokenService refreshTokenService;
+    private final AuditService auditService;
 
     public MessageResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByUsername(request.username())) {
@@ -52,6 +52,7 @@ public class UserService {
 
         String emailToken = emailVerificationService.generateToken(user);
         emailService.sendVerificationEmail(user.getEmail(), emailToken);
+        auditService.log("REGISTER", "SUCCESS", user, user.getUsername(), "User registered");
 
         return new MessageResponseDto(
                 "Registration successful. Please check your email and verify it before logging in."
@@ -61,29 +62,32 @@ public class UserService {
     public AuthResponseDto login(String username, String password) {
 
         if (loginAttemptService.isBlocked(username)) {
+            auditService.log("LOGIN", "BLOCKED", null, username, "Too many login attempts");
             throw new TooManyAttemptsException();
         }
 
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> {
                 loginAttemptService.loginFailed(username);
+                auditService.log("LOGIN", "FAILED", null, username, "Unknown username");
                 return new InvalidCredentialsException();
             });
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             loginAttemptService.loginFailed(username);
+            auditService.log("LOGIN", "FAILED", user, username, "Invalid password");
             throw new InvalidCredentialsException();
         }
 
         if (!Boolean.TRUE.equals(user.getVerified())) {
+            auditService.log("LOGIN", "DENIED", user, username, "Email not verified");
             throw new EmailNotVerifiedException();
         }
 
         loginAttemptService.loginSucceeded(username);
+        auditService.log("LOGIN", "SUCCESS", user, username, "Login successful");
 
-        String token = jwtProvider.generateToken(user);
-
-        return new AuthResponseDto(token);
+        return refreshTokenService.createTokenPair(user);
     }
 
     public UserResponseDto getCurrentUser() {
@@ -147,4 +151,3 @@ public class UserService {
         }
     }
 }
-
