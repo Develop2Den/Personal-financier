@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.controller;
 
-import com.d2d.personal_financier.dto.budgetDTO.BudgetRequestDto;
-import com.d2d.personal_financier.dto.budgetDTO.BudgetResponseDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetRequestDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetResponseDto;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 import com.d2d.personal_financier.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;

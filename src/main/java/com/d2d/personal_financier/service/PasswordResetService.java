@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.service;
 
-import com.d2d.personal_financier.dto.authDTO.PasswordResetConfirmDto;
+import com.d2d.personal_financier.dto.auth_dto.PasswordResetConfirmDto;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
 import com.d2d.personal_financier.entity.PasswordResetToken;
 import com.d2d.personal_financier.entity.User;
@@ -30,12 +30,18 @@ public class PasswordResetService {
     private final RefreshTokenService refreshTokenService;
     private final AuditService auditService;
 
+    private static final String EVENT_PASSWORD_RESET_CONFIRM = "PASSWORD_RESET_CONFIRM";
+    private static final String EVENT_PASSWORD_RESET_REQUEST = "PASSWORD_RESET_REQUEST";
+    private static final String STATUS_IGNORED = "IGNORED";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String STATUS_SUCCESS = "SUCCESS";
+
     public MessageResponseDto requestReset(String email) {
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
         if (optionalUser.isEmpty()) {
-            auditService.log("PASSWORD_RESET_REQUEST", "IGNORED", null, maskEmail(email), "Password reset requested for unknown email");
+            auditService.log(EVENT_PASSWORD_RESET_REQUEST, STATUS_IGNORED, null, maskEmail(email), "Password reset requested for unknown email");
             return genericResponse();
         }
 
@@ -54,7 +60,7 @@ public class PasswordResetService {
         );
 
         emailService.sendPasswordResetEmail(user.getEmail(), token);
-        auditService.log("PASSWORD_RESET_REQUEST", "SUCCESS", user, user.getUsername(), "Password reset email sent");
+        auditService.log(EVENT_PASSWORD_RESET_REQUEST, STATUS_SUCCESS, user, user.getUsername(), "Password reset email sent");
 
         return genericResponse();
     }
@@ -63,18 +69,18 @@ public class PasswordResetService {
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.token())
             .orElseThrow(() -> {
-                auditService.log("PASSWORD_RESET_CONFIRM", "FAILED", null, null, "Unknown password reset token");
+                auditService.log(EVENT_PASSWORD_RESET_CONFIRM, STATUS_FAILED, null, null, "Unknown password reset token");
                 return new InvalidPasswordResetTokenException();
             });
 
         if (resetToken.isUsed()) {
-            auditService.log("PASSWORD_RESET_CONFIRM", "FAILED", resetToken.getOwner(), resetToken.getOwner().getUsername(), "Used password reset token");
+            auditService.log(EVENT_PASSWORD_RESET_CONFIRM, STATUS_FAILED, resetToken.getOwner(), resetToken.getOwner().getUsername(), "Used password reset token");
             throw new PasswordResetTokenAlreadyUsedException();
         }
 
         if (resetToken.isExpired()) {
             passwordResetTokenRepository.delete(resetToken);
-            auditService.log("PASSWORD_RESET_CONFIRM", "FAILED", resetToken.getOwner(), resetToken.getOwner().getUsername(), "Expired password reset token");
+            auditService.log(EVENT_PASSWORD_RESET_CONFIRM, STATUS_FAILED, resetToken.getOwner(), resetToken.getOwner().getUsername(), "Expired password reset token");
             throw new PasswordResetTokenExpiredException();
         }
 
@@ -86,7 +92,7 @@ public class PasswordResetService {
         resetToken.setUsedAt(LocalDateTime.now());
         refreshTokenService.revokeAllForUser(user);
 
-        auditService.log("PASSWORD_RESET_CONFIRM", "SUCCESS", user, user.getUsername(), "Password reset completed and refresh tokens revoked");
+        auditService.log(EVENT_PASSWORD_RESET_CONFIRM, STATUS_SUCCESS, user, user.getUsername(), "Password reset completed and refresh tokens revoked");
 
         return new MessageResponseDto("Password has been reset successfully.");
     }

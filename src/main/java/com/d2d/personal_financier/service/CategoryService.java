@@ -2,8 +2,8 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.HtmlSanitizerService;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
-import com.d2d.personal_financier.dto.categoryDTO.CategoryRequestDto;
-import com.d2d.personal_financier.dto.categoryDTO.CategoryResponseDto;
+import com.d2d.personal_financier.dto.category_dto.CategoryRequestDto;
+import com.d2d.personal_financier.dto.category_dto.CategoryResponseDto;
 import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.exception.CategoryNotFoundException;

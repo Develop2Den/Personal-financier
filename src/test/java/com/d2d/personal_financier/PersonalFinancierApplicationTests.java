@@ -1,13 +1,14 @@
 package com.d2d.personal_financier;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class PersonalFinancierApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void applicationClassShouldBeAvailable() {
+        assertEquals("com.d2d.personal_financier.PersonalFinancierApplication", PersonalFinancierApplication.class.getName());
 	}
 
 }

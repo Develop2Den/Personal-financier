@@ -2,8 +2,8 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.HtmlSanitizerService;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
-import com.d2d.personal_financier.dto.goalDTO.GoalRequestDto;
-import com.d2d.personal_financier.dto.goalDTO.GoalResponseDto;
+import com.d2d.personal_financier.dto.goal_dto.GoalRequestDto;
+import com.d2d.personal_financier.dto.goal_dto.GoalResponseDto;
 import com.d2d.personal_financier.entity.Goal;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.GoalStatus;

@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.controller;
 
-import com.d2d.personal_financier.dto.goalDTO.GoalRequestDto;
-import com.d2d.personal_financier.dto.goalDTO.GoalResponseDto;
+import com.d2d.personal_financier.dto.goal_dto.GoalRequestDto;
+import com.d2d.personal_financier.dto.goal_dto.GoalResponseDto;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 import com.d2d.personal_financier.service.GoalService;
 import io.swagger.v3.oas.annotations.Operation;

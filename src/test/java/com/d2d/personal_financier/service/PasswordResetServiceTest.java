@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.service;
 
-import com.d2d.personal_financier.dto.authDTO.PasswordResetConfirmDto;
+import com.d2d.personal_financier.dto.auth_dto.PasswordResetConfirmDto;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
 import com.d2d.personal_financier.entity.PasswordResetToken;
 import com.d2d.personal_financier.entity.User;

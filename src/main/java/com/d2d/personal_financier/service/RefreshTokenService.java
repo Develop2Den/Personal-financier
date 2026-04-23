@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.jwt.JwtProvider;
-import com.d2d.personal_financier.dto.authDTO.AuthResponseDto;
+import com.d2d.personal_financier.dto.auth_dto.AuthResponseDto;
 import com.d2d.personal_financier.entity.RefreshToken;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.exception.InvalidRefreshTokenException;

@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.mapper;
 
-import com.d2d.personal_financier.dto.budgetDTO.BudgetRequestDto;
-import com.d2d.personal_financier.dto.budgetDTO.BudgetResponseDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetRequestDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetResponseDto;
 import com.d2d.personal_financier.entity.Budget;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

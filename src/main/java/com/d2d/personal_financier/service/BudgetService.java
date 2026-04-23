@@ -1,8 +1,8 @@
 package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
-import com.d2d.personal_financier.dto.budgetDTO.BudgetRequestDto;
-import com.d2d.personal_financier.dto.budgetDTO.BudgetResponseDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetRequestDto;
+import com.d2d.personal_financier.dto.budget_dto.BudgetResponseDto;
 import com.d2d.personal_financier.entity.Budget;
 import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.User;

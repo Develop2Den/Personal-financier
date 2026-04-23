@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.mapper;
 
-import com.d2d.personal_financier.dto.transactionDTO.TransactionRequestDto;
-import com.d2d.personal_financier.dto.transactionDTO.TransactionResponseDto;
+import com.d2d.personal_financier.dto.transaction_dto.TransactionRequestDto;
+import com.d2d.personal_financier.dto.transaction_dto.TransactionResponseDto;
 import com.d2d.personal_financier.entity.Transaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

@@ -2,11 +2,11 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.config.security.utils.LoginAttemptService;
-import com.d2d.personal_financier.dto.authDTO.AuthResponseDto;
-import com.d2d.personal_financier.dto.authDTO.RegisterRequestDto;
+import com.d2d.personal_financier.dto.auth_dto.AuthResponseDto;
+import com.d2d.personal_financier.dto.auth_dto.RegisterRequestDto;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
-import com.d2d.personal_financier.dto.userDTO.UserRequestDto;
-import com.d2d.personal_financier.dto.userDTO.UserResponseDto;
+import com.d2d.personal_financier.dto.user_dto.UserRequestDto;
+import com.d2d.personal_financier.dto.user_dto.UserResponseDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.exception.EmailNotVerifiedException;
 import com.d2d.personal_financier.exception.InvalidCredentialsException;

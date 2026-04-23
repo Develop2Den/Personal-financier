@@ -1,8 +1,8 @@
 package com.d2d.personal_financier.controller;
 
 import com.d2d.personal_financier.dto.error.ErrorResponse;
-import com.d2d.personal_financier.dto.userDTO.UserRequestDto;
-import com.d2d.personal_financier.dto.userDTO.UserResponseDto;
+import com.d2d.personal_financier.dto.user_dto.UserRequestDto;
+import com.d2d.personal_financier.dto.user_dto.UserResponseDto;
 import com.d2d.personal_financier.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -27,7 +27,10 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		    <java.version>21</java.version>
+        <dependency-check.version>10.0.4</dependency-check.version>
+        <spotbugs.maven.plugin.version>4.8.6.2</spotbugs.maven.plugin.version>
+        <findsecbugs.version>1.13.0</findsecbugs.version>
 	</properties>
   <dependencies>
 
@@ -248,5 +251,59 @@
 			</plugin>
 		</plugins>
 	</build>
+
+    <profiles>
+        <profile>
+            <id>security-scan</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${dependency-check.version}</version>
+                        <configuration>
+                            <format>HTML</format>
+                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <skipProvidedScope>true</skipProvidedScope>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${spotbugs.maven.plugin.version}</version>
+                        <configuration>
+                            <effort>Max</effort>
+                            <threshold>Low</threshold>
+                            <failOnError>true</failOnError>
+                            <plugins>
+                                <plugin>
+                                    <groupId>com.h3xstream.findsecbugs</groupId>
+                                    <artifactId>findsecbugs-plugin</artifactId>
+                                    <version>${findsecbugs.version}</version>
+                                </plugin>
+                            </plugins>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

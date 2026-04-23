@@ -1,7 +1,7 @@
 package com.d2d.personal_financier.mapper;
 
-import com.d2d.personal_financier.dto.categoryDTO.CategoryRequestDto;
-import com.d2d.personal_financier.dto.categoryDTO.CategoryResponseDto;
+import com.d2d.personal_financier.dto.category_dto.CategoryRequestDto;
+import com.d2d.personal_financier.dto.category_dto.CategoryResponseDto;
 import com.d2d.personal_financier.entity.Category;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

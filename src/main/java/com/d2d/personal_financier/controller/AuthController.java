@@ -2,16 +2,18 @@ package com.d2d.personal_financier.controller;
 
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
 import com.d2d.personal_financier.config.security.jwt.JwtProvider;
-import com.d2d.personal_financier.dto.authDTO.LogoutRequestDto;
-import com.d2d.personal_financier.dto.authDTO.PasswordResetConfirmDto;
-import com.d2d.personal_financier.dto.authDTO.PasswordResetRequestDto;
-import com.d2d.personal_financier.dto.authDTO.RefreshTokenRequestDto;
-import com.d2d.personal_financier.dto.LoginDto.LoginRequestDto;
-import com.d2d.personal_financier.dto.authDTO.AuthResponseDto;
-import com.d2d.personal_financier.dto.authDTO.RegisterRequestDto;
+import com.d2d.personal_financier.dto.auth_dto.LogoutRequestDto;
+import com.d2d.personal_financier.dto.auth_dto.PasswordResetConfirmDto;
+import com.d2d.personal_financier.dto.auth_dto.PasswordResetRequestDto;
+import com.d2d.personal_financier.dto.auth_dto.RefreshTokenRequestDto;
+import com.d2d.personal_financier.dto.Login_dto.LoginRequestDto;
+import com.d2d.personal_financier.dto.auth_dto.AuthResponseDto;
+import com.d2d.personal_financier.dto.auth_dto.RegisterRequestDto;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
-import com.d2d.personal_financier.dto.tokenDTO.ResendVerificationRequestDto;
+import com.d2d.personal_financier.dto.token_dto.ResendVerificationRequestDto;
+import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.repository.UserRepository;
 import com.d2d.personal_financier.service.EmailVerificationService;
 import com.d2d.personal_financier.service.AuditService;
 import com.d2d.personal_financier.service.PasswordResetService;
@@ -38,6 +40,7 @@ public class AuthController {
 
     private final EmailVerificationService emailVerificationService;
     private final JwtBlacklistService jwtBlacklistService;
+    private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
@@ -200,24 +203,27 @@ public class AuthController {
         @RequestBody(required = false) LogoutRequestDto logoutRequest) {
 
         String authHeader = request.getHeader("Authorization");
-        String principal = null;
+        String username = null;
+        User user = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
 
-            jwtBlacklistService.blacklistToken(token);
-
             if (jwtProvider.validateToken(token)) {
-                principal = jwtProvider.getUsernameFromToken(token);
+
+                username = jwtProvider.getUsernameFromToken(token);
+                user = userRepository.findByUsername(username).orElse(null);
+
+                jwtBlacklistService.blacklistToken(token);
             }
         }
 
-        if (logoutRequest != null) {
+        if (logoutRequest != null && logoutRequest.refreshToken() != null) {
             refreshTokenService.revoke(logoutRequest.refreshToken());
         }
 
-        auditService.log("LOGOUT", "SUCCESS", null, principal, "Logout completed");
+        auditService.log("LOGOUT", "SUCCESS", user, username, "Logout completed");
 
         return ResponseEntity.noContent().build();
     }
