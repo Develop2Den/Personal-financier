@@ -11,10 +11,11 @@ import com.d2d.personal_financier.mapper.AccountMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,14 +48,12 @@ public class AccountService {
         return accountMapper.toDto(account);
     }
 
-    public List<AccountResponseDto> getAllAccounts() {
+    public Page<AccountResponseDto> getAllAccounts(Pageable pageable) {
 
         User user = securityUtils.getCurrentUser();
 
-        return accountRepository.findByOwnerId(user.getId())
-                .stream()
-                .map(accountMapper::toDto)
-                .toList();
+        return accountRepository.findByOwnerId(user.getId(), pageable)
+                .map(accountMapper::toDto);
     }
 
     public AccountResponseDto getAccountById(Long id) {

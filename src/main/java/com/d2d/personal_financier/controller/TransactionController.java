@@ -2,8 +2,12 @@ package com.d2d.personal_financier.controller;
 
 import com.d2d.personal_financier.dto.transaction_dto.TransactionRequestDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransactionResponseDto;
+import com.d2d.personal_financier.dto.transaction_dto.TransferRequestDto;
+import com.d2d.personal_financier.dto.transaction_dto.TransferResponseDto;
+import com.d2d.personal_financier.dto.page_dto.PageResponseDto;
 import com.d2d.personal_financier.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,11 +16,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 
 @RestController
@@ -60,6 +66,37 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/transfer")
+    @Operation(summary = "Transfer money between accounts")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Transfer completed successfully"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid transfer request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Account not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Concurrent update conflict",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Insufficient balance for source account",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<TransferResponseDto> transferBetweenAccounts(
+            @Valid @RequestBody TransferRequestDto dto) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.transferBetweenAccounts(dto));
+    }
+
     @GetMapping
     @Operation(summary = "Get all transactions")
     @ApiResponses({
@@ -70,8 +107,11 @@ public class TransactionController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<List<TransactionResponseDto>> getAllTransactions() {
-        return ResponseEntity.ok(transactionService.getAllTransactions());
+    public ResponseEntity<PageResponseDto<TransactionResponseDto>> getAllTransactions(
+            @ParameterObject
+            @Parameter(description = "Pagination and sorting parameters")
+            @PageableDefault(size = 20, sort = "date") Pageable pageable) {
+        return ResponseEntity.ok(PageResponseDto.from(transactionService.getAllTransactions(pageable)));
     }
 
     @GetMapping("/{id}")
@@ -113,4 +153,3 @@ public class TransactionController {
         return ResponseEntity.noContent().build();
     }
 }
-

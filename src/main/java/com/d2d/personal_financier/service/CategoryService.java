@@ -11,8 +11,9 @@ import com.d2d.personal_financier.mapper.CategoryMapper;
 import com.d2d.personal_financier.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +42,12 @@ public class CategoryService {
         return categoryMapper.toDto(category);
     }
 
-    public List<CategoryResponseDto> getAllCategories() {
+    public Page<CategoryResponseDto> getAllCategories(Pageable pageable) {
 
         User user = securityUtils.getCurrentUser();
 
-        return categoryRepository.findByOwnerId(user.getId())
-                .stream()
-                .map(categoryMapper::toDto)
-                .toList();
+        return categoryRepository.findByOwnerId(user.getId(), pageable)
+                .map(categoryMapper::toDto);
     }
 
     public CategoryResponseDto getCategoryById(Long id) {

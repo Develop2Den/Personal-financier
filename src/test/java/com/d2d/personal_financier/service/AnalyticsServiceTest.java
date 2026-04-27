@@ -67,7 +67,7 @@ class AnalyticsServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(transactionRepository.findByOwnerId(1L)).thenReturn(buildTransactions(user));
         when(accountRepository.findByOwnerId(1L)).thenReturn(List.of(
-            new Account(1L, "Main", "USD", new BigDecimal("150.00"), null, user, List.of())
+            new Account(1L, null, "Main", "USD", new BigDecimal("150.00"), null, user, List.of())
         ));
         when(goalRepository.findByOwnerId(1L)).thenReturn(List.of(new Goal(), new Goal()));
 

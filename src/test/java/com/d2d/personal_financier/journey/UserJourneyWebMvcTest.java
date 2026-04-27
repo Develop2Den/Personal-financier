@@ -22,6 +22,7 @@ import com.d2d.personal_financier.dto.category_dto.CategoryResponseDto;
 import com.d2d.personal_financier.dto.goal_dto.GoalResponseDto;
 import com.d2d.personal_financier.dto.message.MessageResponseDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransactionResponseDto;
+import com.d2d.personal_financier.dto.transaction_dto.TransferResponseDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.AccountType;
 import com.d2d.personal_financier.entity.enums.BudgetPeriod;
@@ -49,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -186,6 +189,21 @@ class UserJourneyWebMvcTest {
         when(transactionService.createTransaction(any())).thenReturn(
             new TransactionResponseDto(30L, new BigDecimal("50.00"), TransactionType.EXPENSE, "Groceries", now, 10L, 20L),
             new TransactionResponseDto(31L, new BigDecimal("2500.00"), TransactionType.INCOME, "Monthly salary", now, 10L, 21L)
+        );
+        when(transactionService.transferBetweenAccounts(any())).thenReturn(
+            new TransferResponseDto(
+                "transfer-ref",
+                new BigDecimal("100.00"),
+                "USD",
+                "Card to cash",
+                now,
+                10L,
+                11L,
+                32L,
+                33L,
+                new BigDecimal("900.00"),
+                new BigDecimal("100.00")
+            )
         );
 
         when(budgetService.createBudget(any())).thenReturn(
@@ -414,5 +432,113 @@ class UserJourneyWebMvcTest {
                     """.formatted(resetToken)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("Password has been reset successfully."));
+    }
+
+    @Test
+    void pagedListEndpointsShouldReturnSpringPagePayload() throws Exception {
+        String username = "denisdev";
+
+        when(accountService.getAllAccounts(any())).thenReturn(
+            new PageImpl<>(
+                List.of(new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD)),
+                PageRequest.of(0, 20),
+                1
+            )
+        );
+
+        when(categoryService.getAllCategories(any())).thenReturn(
+            new PageImpl<>(
+                List.of(new CategoryResponseDto(20L, "Food", TransactionType.EXPENSE)),
+                PageRequest.of(0, 20),
+                1
+            )
+        );
+
+        when(transactionService.getAllTransactions(any())).thenReturn(
+            new PageImpl<>(
+                List.of(new TransactionResponseDto(
+                    30L,
+                    new BigDecimal("50.00"),
+                    TransactionType.EXPENSE,
+                    "Groceries",
+                    LocalDateTime.of(2026, 4, 23, 10, 0),
+                    10L,
+                    20L
+                )),
+                PageRequest.of(0, 20),
+                1
+            )
+        );
+
+        mockMvc.perform(get("/api/accounts")
+                .with(user(username))
+                .param("page", "0")
+                .param("size", "20")
+                .param("sort", "id,asc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(10L))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.page").value(0))
+            .andExpect(jsonPath("$.size").value(20));
+
+        mockMvc.perform(get("/api/categories")
+                .with(user(username))
+                .param("page", "0")
+                .param("size", "20")
+                .param("sort", "id,asc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(20L))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.page").value(0))
+            .andExpect(jsonPath("$.size").value(20));
+
+        mockMvc.perform(get("/api/transactions")
+                .with(user(username))
+                .param("page", "0")
+                .param("size", "20")
+                .param("sort", "date,asc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(30L))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.page").value(0))
+            .andExpect(jsonPath("$.size").value(20));
+    }
+
+    @Test
+    void transferEndpointShouldReturnTransferPayload() throws Exception {
+        when(transactionService.transferBetweenAccounts(any())).thenReturn(
+            new TransferResponseDto(
+                "transfer-ref",
+                new BigDecimal("150.00"),
+                "USD",
+                "Card to cash",
+                LocalDateTime.of(2026, 4, 27, 11, 0),
+                10L,
+                11L,
+                101L,
+                102L,
+                new BigDecimal("850.00"),
+                new BigDecimal("250.00")
+            )
+        );
+
+        mockMvc.perform(post("/api/transactions/transfer")
+                .with(user("denisdev"))
+                .contentType(APPLICATION_JSON)
+                .content("""
+                    {
+                      "fromAccountId": 10,
+                      "toAccountId": 11,
+                      "amount": 150.00,
+                      "description": "Card to cash",
+                      "date": "2026-04-27T11:00:00"
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.transferReference").value("transfer-ref"))
+            .andExpect(jsonPath("$.fromAccountId").value(10L))
+            .andExpect(jsonPath("$.toAccountId").value(11L))
+            .andExpect(jsonPath("$.outgoingTransactionId").value(101L))
+            .andExpect(jsonPath("$.incomingTransactionId").value(102L));
     }
 }
