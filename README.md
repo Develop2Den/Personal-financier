@@ -4,57 +4,119 @@ Backend application for managing personal finances.
 
 The system allows users to manage financial accounts, track transactions, categorize expenses, and plan budgets and financial goals.
 
-This project focuses on building a secure REST API using the Spring ecosystem and modern backend development practices.
+This project focuses on building a **secure REST API** using the Spring ecosystem and modern backend development practices.
 
 ---
 
 # Tech Stack
 
 ## Backend
-- Java
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- MapStruct
+
+* Java
+* Spring Boot
+* Spring Security
+* Spring Data JPA
+* MapStruct
 
 ## Database
-- PostgreSQL
+
+* PostgreSQL
+* Flyway (database migrations)
 
 ## Security
-- JWT Authentication
-- Email verification
-- Rate limiting (Bucket4j)
+
+* JWT authentication
+* Refresh token rotation
+* Refresh token hashing (SHA-256)
+* JWT blacklist logout
+* Email verification
+* Login attempt protection
+* Rate limiting (Bucket4j)
+* Security headers configuration
 
 ## Tools
-- Maven
-- Docker
-- Swagger / OpenAPI
-- Git
+
+* Maven
+* Docker
+* Swagger / OpenAPI
+* Git
 
 ---
 
 # Features
 
-- User registration with **email verification**
-- **JWT authentication**
-- Secure login flow
-- Account management
-- Transaction tracking
-- Transaction categorization
-- Budget management
-- Financial goals
-- DTO mapping using **MapStruct**
-- Global exception handling
-- Login attempt protection
-- JWT blacklist logout
-- Rate limiting using **Bucket4j**
-- Security headers configuration
+* User registration with email verification
+* JWT authentication
+* Secure login flow
+* Account management
+* Transaction tracking
+* Transaction categorization
+* Budget management
+* Financial goals
+* DTO mapping using MapStruct
+* Global exception handling
+* Login attempt protection
+* JWT blacklist logout
+* Rate limiting using Bucket4j
+* Security headers configuration
+
+---
+
+# Security Architecture
+
+The project implements multiple layers of API protection.
+
+Security mechanisms include:
+
+* Stateless JWT access tokens
+* Refresh token rotation
+* Refresh token hashing (SHA-256)
+* Token revocation support
+* Login attempt protection against brute force attacks
+* Rate limiting using Bucket4j
+* Security HTTP headers
+* Email verification during registration
+
+### Authentication Flow
+
+Client request pipeline:
+
+```
+Client
+  │
+  ▼
+RateLimitFilter
+  │
+  ▼
+JwtAuthFilter
+  │
+  ▼
+Spring Security
+  │
+  ▼
+Controllers
+```
+
+### Token Lifecycle
+
+```
+Login
+  │
+  ▼
+Access Token (short-lived JWT)
+Refresh Token (stored in database)
+  │
+  ▼
+Refresh token rotation on refresh
+```
+
+Access tokens are stateless and short-lived, while refresh tokens are stored in the database and can be revoked.
 
 ---
 
 # Project Structure
 
-The application follows a layered architecture:
+The application follows a layered architecture.
 
 ```
 controller
@@ -76,37 +138,42 @@ Controller → Service → Repository → Database
 
 Additional layers:
 
-- DTO layer for API communication
-- MapStruct for entity ↔ DTO mapping
-- Security layer with JWT authentication
-- Global exception handling
+* DTO layer for API communication
+* MapStruct for entity ↔ DTO mapping
+* Security layer with JWT authentication
+* Global exception handling
 
 ---
 
 # Main Entities
 
-The system contains the following core entities:
-
 ### User
+
 Application user with authentication and email verification.
 
 ### Account
+
 Financial accounts such as:
-- Cash
-- Card
-- Bank
-- Crypto
+
+* Cash
+* Card
+* Bank
+* Crypto
 
 ### Transaction
+
 Records income and expense operations.
 
 ### Category
+
 Defines transaction categories.
 
 ### Budget
+
 Allows users to set spending limits.
 
 ### Goal
+
 Financial goals tracking.
 
 ---
@@ -130,19 +197,6 @@ POST /transactions
 ```
 
 API documentation is available via **Swagger UI**.
-
----
-
-# Security
-
-Security mechanisms implemented in the project:
-
-- JWT authentication
-- Email verification
-- Login attempt limitation
-- Rate limiting (Bucket4j)
-- JWT blacklist logout
-- Security headers configuration
 
 ---
 
@@ -170,7 +224,7 @@ mvn spring-boot:run
 
 # Learning Purpose
 
-This project was built to practice backend development with the Spring ecosystem, focusing on building secure REST APIs and applying common backend architecture patterns.
+This project was built to practice backend development with the Spring ecosystem, focusing on building **secure REST APIs** and applying common backend architecture patterns.
 
 ---
 
@@ -178,5 +232,6 @@ This project was built to practice backend development with the Spring ecosystem
 
 Denis Denisov
 
-GitHub  
+GitHub:
 https://github.com/Develop2Den
+
