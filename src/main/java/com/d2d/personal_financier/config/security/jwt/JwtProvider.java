@@ -2,17 +2,24 @@ package com.d2d.personal_financier.config.security.jwt;
 
 import com.d2d.personal_financier.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.SecurityException;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
+@Slf4j
 public class JwtProvider {
 
     @Value("${jwt.secret}")
@@ -21,11 +28,17 @@ public class JwtProvider {
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    private SecretKey getSigningKey() {
+    private SecretKey signingKey;
+
+    @PostConstruct
+    public void init() {
 
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        signingKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
-        return Keys.hmacShaKeyFor(keyBytes);
+    private SecretKey getSigningKey() {
+        return signingKey;
     }
 
     public String generateAccessToken(User user) {
@@ -61,19 +74,34 @@ public class JwtProvider {
         return getClaims(token).get("role", String.class);
     }
 
-    public boolean validateToken(String token) {
+    public Optional<Claims> getValidatedClaims(String token) {
 
         try {
 
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
-                .parseSignedClaims(token);
+                .parseSignedClaims(token)
+                .getPayload();
 
-            return true;
+            return Optional.of(claims);
 
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
+        } catch (ExpiredJwtException e) {
+            log.debug("JWT token expired");
+        } catch (MalformedJwtException e) {
+            log.debug("JWT token has invalid format");
+        } catch (SecurityException e) {
+            log.debug("JWT token signature validation failed");
+        } catch (JwtException e) {
+            log.debug("JWT token validation failed");
+        } catch (IllegalArgumentException e) {
+            log.debug("JWT token is empty or null");
         }
+
+        return Optional.empty();
+    }
+
+    public boolean validateToken(String token) {
+        return getValidatedClaims(token).isPresent();
     }
 }

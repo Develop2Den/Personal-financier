@@ -41,6 +41,8 @@ import com.d2d.personal_financier.service.PasswordResetService;
 import com.d2d.personal_financier.service.RefreshTokenService;
 import com.d2d.personal_financier.service.TransactionService;
 import com.d2d.personal_financier.service.UserService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -168,6 +170,7 @@ class UserJourneyWebMvcTest {
             .email(email)
             .verified(true)
             .build();
+        Claims accessClaims = Jwts.claims().subject(username).build();
 
         when(userService.register(any())).thenReturn(
             new MessageResponseDto("Registration successful. Please check your email and verify it before logging in.")
@@ -232,8 +235,7 @@ class UserJourneyWebMvcTest {
             )
         );
 
-        when(jwtProvider.validateToken(accessToken)).thenReturn(true);
-        when(jwtProvider.getUsernameFromToken(accessToken)).thenReturn(username);
+        when(jwtProvider.getValidatedClaims(accessToken)).thenReturn(Optional.of(accessClaims));
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(userEntity));
         doNothing().when(refreshTokenService).revoke(refreshToken);
         when(refreshTokenService.refresh(refreshToken)).thenThrow(new InvalidRefreshTokenException());

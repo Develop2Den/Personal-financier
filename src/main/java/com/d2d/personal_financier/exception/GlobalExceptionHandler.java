@@ -3,6 +3,7 @@ package com.d2d.personal_financier.exception;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -20,9 +21,10 @@ public class GlobalExceptionHandler {
         MethodArgumentNotValidException ex,
         HttpServletRequest request) {
 
-        String message = ex.getBindingResult()
-            .getFieldError()
-            .getDefaultMessage();
+        String message = ex.getBindingResult().getFieldErrors().stream()
+            .findFirst()
+            .map(DefaultMessageSourceResolvable::getDefaultMessage)
+            .orElse("Validation failed");
 
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),

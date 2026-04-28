@@ -96,12 +96,14 @@ class TransactionServiceTest {
 
     @Test
     void transferBetweenAccountsShouldRejectSameAccount() {
-        assertThrows(
+        TransferRequestDto request =
+                new TransferRequestDto(10L, 10L, new BigDecimal("150.00"), "Same account", LocalDateTime.now());
+
+        InvalidTransferException exception = assertThrows(
                 InvalidTransferException.class,
-                () -> transactionService.transferBetweenAccounts(
-                        new TransferRequestDto(10L, 10L, new BigDecimal("150.00"), "Same account", LocalDateTime.now())
-                )
+                () -> transactionService.transferBetweenAccounts(request)
         );
+        assertEquals("Source and destination accounts must be different", exception.getMessage());
 
         verify(accountRepository, never()).findByIdAndOwnerId(any(), any());
     }
@@ -116,12 +118,14 @@ class TransactionServiceTest {
         when(accountRepository.findByIdAndOwnerId(10L, 1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findByIdAndOwnerId(11L, 1L)).thenReturn(Optional.of(toAccount));
 
-        assertThrows(
+        TransferRequestDto request =
+                new TransferRequestDto(10L, 11L, new BigDecimal("150.00"), "Card to cash", LocalDateTime.now());
+
+        InsufficientBalanceException exception = assertThrows(
                 InsufficientBalanceException.class,
-                () -> transactionService.transferBetweenAccounts(
-                        new TransferRequestDto(10L, 11L, new BigDecimal("150.00"), "Card to cash", LocalDateTime.now())
-                )
+                () -> transactionService.transferBetweenAccounts(request)
         );
+        assertEquals("Insufficient balance for account id: 10", exception.getMessage());
     }
 
     private Account buildAccount(Long id, String currency, String balance, User user) {

@@ -1,4 +1,4 @@
-package com.d2d.personal_financier.dto.Login_dto;
+package com.d2d.personal_financier.dto.login_dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

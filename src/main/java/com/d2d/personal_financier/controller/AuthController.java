@@ -6,7 +6,7 @@ import com.d2d.personal_financier.dto.auth_dto.LogoutRequestDto;
 import com.d2d.personal_financier.dto.auth_dto.PasswordResetConfirmDto;
 import com.d2d.personal_financier.dto.auth_dto.PasswordResetRequestDto;
 import com.d2d.personal_financier.dto.auth_dto.RefreshTokenRequestDto;
-import com.d2d.personal_financier.dto.Login_dto.LoginRequestDto;
+import com.d2d.personal_financier.dto.login_dto.LoginRequestDto;
 import com.d2d.personal_financier.dto.auth_dto.AuthResponseDto;
 import com.d2d.personal_financier.dto.auth_dto.RegisterRequestDto;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
@@ -19,6 +19,7 @@ import com.d2d.personal_financier.service.AuditService;
 import com.d2d.personal_financier.service.PasswordResetService;
 import com.d2d.personal_financier.service.RefreshTokenService;
 import com.d2d.personal_financier.service.UserService;
+import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +32,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -210,9 +213,11 @@ public class AuthController {
 
             String token = authHeader.substring(7);
 
-            if (jwtProvider.validateToken(token)) {
+            Optional<Claims> claims = jwtProvider.getValidatedClaims(token);
 
-                username = jwtProvider.getUsernameFromToken(token);
+            if (claims.isPresent()) {
+
+                username = claims.get().getSubject();
                 user = userRepository.findByUsername(username).orElse(null);
 
                 jwtBlacklistService.blacklistToken(token);

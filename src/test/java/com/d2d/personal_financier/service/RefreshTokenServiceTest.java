@@ -14,7 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,12 +53,12 @@ class RefreshTokenServiceTest {
             .build();
 
         RefreshToken currentToken = RefreshToken.builder()
-            .token("old-refresh-token")
+            .tokenHash(hashToken("old-refresh-token"))
             .owner(user)
             .expiryDate(LocalDateTime.now().plusMinutes(10))
             .build();
 
-        when(refreshTokenRepository.findByToken("old-refresh-token")).thenReturn(Optional.of(currentToken));
+        when(refreshTokenRepository.findByTokenHash(hashToken("old-refresh-token"))).thenReturn(Optional.of(currentToken));
         when(jwtProvider.generateAccessToken(user)).thenReturn("new-access-token");
 
         AuthResponseDto response = refreshTokenService.refresh("old-refresh-token");
@@ -76,15 +80,25 @@ class RefreshTokenServiceTest {
             .build();
 
         RefreshToken revokedToken = RefreshToken.builder()
-            .token("revoked-token")
+            .tokenHash(hashToken("revoked-token"))
             .owner(user)
             .expiryDate(LocalDateTime.now().plusMinutes(10))
             .revokedAt(LocalDateTime.now().minusMinutes(1))
             .build();
 
-        when(refreshTokenRepository.findByToken("revoked-token")).thenReturn(Optional.of(revokedToken));
+        when(refreshTokenRepository.findByTokenHash(hashToken("revoked-token"))).thenReturn(Optional.of(revokedToken));
 
         assertThrows(InvalidRefreshTokenException.class, () -> refreshTokenService.refresh("revoked-token"));
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
