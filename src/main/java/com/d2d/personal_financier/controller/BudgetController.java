@@ -3,8 +3,10 @@ package com.d2d.personal_financier.controller;
 import com.d2d.personal_financier.dto.budget_dto.BudgetRequestDto;
 import com.d2d.personal_financier.dto.budget_dto.BudgetResponseDto;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
+import com.d2d.personal_financier.dto.page_dto.PageResponseDto;
 import com.d2d.personal_financier.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,11 +15,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/budgets")
@@ -68,9 +71,12 @@ public class BudgetController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<List<BudgetResponseDto>> getAllBudgets() {
+    public ResponseEntity<PageResponseDto<BudgetResponseDto>> getAllBudgets(
+            @ParameterObject
+            @Parameter(description = "Pagination and sorting parameters")
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
 
-        return ResponseEntity.ok(budgetService.getAllBudgets());
+        return ResponseEntity.ok(PageResponseDto.from(budgetService.getAllBudgets(pageable)));
     }
 
     @GetMapping("/{id}")

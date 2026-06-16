@@ -1,10 +1,13 @@
 package com.d2d.personal_financier.security;
 
+import com.d2d.personal_financier.config.security.ApiAccessDeniedHandler;
+import com.d2d.personal_financier.config.security.ApiAuthenticationEntryPoint;
 import com.d2d.personal_financier.config.security.SecurityConfig;
 import com.d2d.personal_financier.config.security.jwt.JwtAuthFilter;
 import com.d2d.personal_financier.config.security.jwt.JwtProvider;
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
 import com.d2d.personal_financier.config.security.utils.RateLimitFilter;
+import com.d2d.personal_financier.config.security.utils.SecurityErrorResponseWriter;
 import com.d2d.personal_financier.controller.AnalyticsController;
 import com.d2d.personal_financier.controller.AuthController;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
@@ -38,11 +41,18 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = {AuthController.class, AnalyticsController.class})
-@Import({SecurityConfig.class, GlobalExceptionHandler.class})
+@Import({
+    SecurityConfig.class,
+    GlobalExceptionHandler.class,
+    ApiAuthenticationEntryPoint.class,
+    ApiAccessDeniedHandler.class,
+    SecurityErrorResponseWriter.class
+})
 class SecurityConfigurationIntegrationTest {
 
     @Autowired
@@ -103,7 +113,10 @@ class SecurityConfigurationIntegrationTest {
     @Test
     void protectedEndpointShouldRejectAnonymousRequests() throws Exception {
         mockMvc.perform(get("/api/analytics/dashboard"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.message").value("Authentication is required"))
+            .andExpect(jsonPath("$.path").value("/api/analytics/dashboard"));
     }
 
     @Test

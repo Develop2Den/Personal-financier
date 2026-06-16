@@ -34,6 +34,8 @@ public class UserService {
     private final RefreshTokenService refreshTokenService;
     private final AuditService auditService;
 
+    private static final String LOGIN = "LOGIN";
+
     public MessageResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByUsername(request.username())) {
             throw new UsernameAlreadyTakenException(request.username());
@@ -62,30 +64,30 @@ public class UserService {
     public AuthResponseDto login(String username, String password) {
 
         if (loginAttemptService.isBlocked(username)) {
-            auditService.log("LOGIN", "BLOCKED", null, username, "Too many login attempts");
+            auditService.log(LOGIN, "BLOCKED", null, username, "Too many login attempts");
             throw new TooManyAttemptsException();
         }
 
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> {
                 loginAttemptService.loginFailed(username);
-                auditService.log("LOGIN", "FAILED", null, username, "Unknown username");
+                auditService.log(LOGIN, "FAILED", null, username, "Unknown username");
                 return new InvalidCredentialsException();
             });
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             loginAttemptService.loginFailed(username);
-            auditService.log("LOGIN", "FAILED", user, username, "Invalid password");
+            auditService.log(LOGIN, "FAILED", user, username, "Invalid password");
             throw new InvalidCredentialsException();
         }
 
         if (!Boolean.TRUE.equals(user.getVerified())) {
-            auditService.log("LOGIN", "DENIED", user, username, "Email not verified");
+            auditService.log(LOGIN, "DENIED", user, username, "Email not verified");
             throw new EmailNotVerifiedException();
         }
 
         loginAttemptService.loginSucceeded(username);
-        auditService.log("LOGIN", "SUCCESS", user, username, "Login successful");
+        auditService.log(LOGIN, "SUCCESS", user, username, "Login successful");
 
         return refreshTokenService.createTokenPair(user);
     }

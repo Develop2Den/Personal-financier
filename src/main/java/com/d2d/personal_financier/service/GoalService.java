@@ -12,10 +12,11 @@ import com.d2d.personal_financier.mapper.GoalMapper;
 import com.d2d.personal_financier.repository.GoalRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,14 +47,12 @@ public class GoalService {
         return goalMapper.toDto(goal);
     }
 
-    public List<GoalResponseDto> getAllGoals() {
+    public Page<GoalResponseDto> getAllGoals(Pageable pageable) {
 
         User user = securityUtils.getCurrentUser();
 
-        return goalRepository.findByOwnerId(user.getId())
-                .stream()
-                .map(goalMapper::toDto)
-                .toList();
+        return goalRepository.findByOwnerId(user.getId(), pageable)
+            .map(goalMapper::toDto);
     }
 
     public GoalResponseDto getGoalById(Long id) {
@@ -61,7 +60,7 @@ public class GoalService {
         User user = securityUtils.getCurrentUser();
 
         Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new GoalNotFoundException(id));
+            .orElseThrow(() -> new GoalNotFoundException(id));
 
         return goalMapper.toDto(goal);
     }
@@ -71,7 +70,7 @@ public class GoalService {
         User user = securityUtils.getCurrentUser();
 
         Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new GoalNotFoundException(id));
+            .orElseThrow(() -> new GoalNotFoundException(id));
 
         goal.setName(dto.name());
         goal.setTargetAmount(dto.targetAmount());
@@ -87,7 +86,7 @@ public class GoalService {
         User user = securityUtils.getCurrentUser();
 
         Goal goal = goalRepository.findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new GoalNotFoundException(id));
+            .orElseThrow(() -> new GoalNotFoundException(id));
 
         goalRepository.delete(goal);
     }

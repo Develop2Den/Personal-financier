@@ -13,8 +13,9 @@ import com.d2d.personal_financier.repository.BudgetRepository;
 import com.d2d.personal_financier.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,14 +44,12 @@ public class BudgetService {
         return budgetMapper.toDto(budget);
     }
 
-    public List<BudgetResponseDto> getAllBudgets() {
+    public Page<BudgetResponseDto> getAllBudgets(Pageable pageable) {
 
         User user = securityUtils.getCurrentUser();
 
-        return budgetRepository.findByOwnerId(user.getId())
-                .stream()
-                .map(budgetMapper::toDto)
-                .toList();
+        return budgetRepository.findByOwnerId(user.getId(), pageable)
+                .map(budgetMapper::toDto);
     }
 
     public BudgetResponseDto getBudgetById(Long id) {

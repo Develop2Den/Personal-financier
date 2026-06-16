@@ -1,10 +1,13 @@
 package com.d2d.personal_financier.journey;
 
+import com.d2d.personal_financier.config.security.ApiAccessDeniedHandler;
+import com.d2d.personal_financier.config.security.ApiAuthenticationEntryPoint;
 import com.d2d.personal_financier.config.security.SecurityConfig;
 import com.d2d.personal_financier.config.security.jwt.JwtAuthFilter;
 import com.d2d.personal_financier.config.security.jwt.JwtProvider;
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
 import com.d2d.personal_financier.config.security.utils.RateLimitFilter;
+import com.d2d.personal_financier.config.security.utils.SecurityErrorResponseWriter;
 import com.d2d.personal_financier.controller.AccountController;
 import com.d2d.personal_financier.controller.AnalyticsController;
 import com.d2d.personal_financier.controller.AuthController;
@@ -82,7 +85,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     GoalController.class,
     AnalyticsController.class
 })
-@Import({SecurityConfig.class, GlobalExceptionHandler.class})
+@Import({
+    SecurityConfig.class,
+    GlobalExceptionHandler.class,
+    ApiAuthenticationEntryPoint.class,
+    ApiAccessDeniedHandler.class,
+    SecurityErrorResponseWriter.class
+})
 class UserJourneyWebMvcTest {
 
     @Autowired
