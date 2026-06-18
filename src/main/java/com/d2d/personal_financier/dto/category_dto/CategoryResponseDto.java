@@ -13,6 +13,9 @@ public record CategoryResponseDto(
         String name,
 
         @Schema(description = "Transaction type associated with category", example = "EXPENSE")
-        TransactionType type
+        TransactionType type,
+
+        @Schema(description = "Category active status", example = "true")
+        Boolean active
 
 ) {}

@@ -6,6 +6,7 @@ import com.d2d.personal_financier.dto.account_dto.AccountRequestDto;
 import com.d2d.personal_financier.dto.account_dto.AccountResponseDto;
 import com.d2d.personal_financier.entity.Account;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.exception.AccountAlreadyExistsException;
 import com.d2d.personal_financier.exception.AccountNotFoundException;
 import com.d2d.personal_financier.mapper.AccountMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
@@ -29,14 +30,25 @@ public class AccountService {
 
     public AccountResponseDto createAccount(AccountRequestDto dto) {
 
-        Account account = accountMapper.toEntity(dto);
-
-        account.setName(
-            sanitizer.sanitize(dto.name())
-        );
-
         User user = securityUtils.getCurrentUser();
+        String sanitizedName = sanitizer.sanitize(dto.name());
 
+        Account existingAccount = accountRepository.findByNameAndOwnerId(sanitizedName, user.getId())
+            .orElse(null);
+
+        if (existingAccount != null) {
+            if (Boolean.TRUE.equals(existingAccount.getActive())) {
+                throw new AccountAlreadyExistsException(sanitizedName);
+            }
+
+            existingAccount.setActive(true);
+            accountRepository.save(existingAccount);
+
+            return accountMapper.toDto(existingAccount);
+        }
+
+        Account account = accountMapper.toEntity(dto);
+        account.setName(sanitizedName);
         account.setOwner(user);
 
         if (account.getBalance() == null) {
@@ -52,7 +64,7 @@ public class AccountService {
 
         User user = securityUtils.getCurrentUser();
 
-        return accountRepository.findByOwnerId(user.getId(), pageable)
+        return accountRepository.findByOwnerIdAndActiveTrue(user.getId(), pageable)
                 .map(accountMapper::toDto);
     }
 
@@ -60,7 +72,7 @@ public class AccountService {
 
         User user = securityUtils.getCurrentUser();
 
-        Account account = accountRepository.findByIdAndOwnerId(id, user.getId())
+        Account account = accountRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(id));
 
         return accountMapper.toDto(account);
@@ -70,10 +82,11 @@ public class AccountService {
 
         User user = securityUtils.getCurrentUser();
 
-        Account account = accountRepository.findByIdAndOwnerId(id, user.getId())
+        Account account = accountRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(id));
 
-        accountRepository.delete(account);
+        account.setActive(false);
+        accountRepository.save(account);
     }
 }
 

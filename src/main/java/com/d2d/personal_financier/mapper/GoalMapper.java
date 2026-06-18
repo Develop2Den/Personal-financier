@@ -14,6 +14,7 @@ public interface GoalMapper {
 
     @Mapping(target = "owner", ignore = true)
     @Mapping(target = "currentAmount", ignore = true)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
     Goal toEntity(GoalRequestDto dto);
 

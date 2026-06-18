@@ -12,4 +12,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByOwnerId(Long ownerId);
     Page<Category> findByOwnerId(Long ownerId, Pageable pageable);
     Optional<Category> findByIdAndOwnerId(Long id, Long ownerId);
+    List<Category> findByOwnerIdAndActiveTrue(Long ownerId);
+    Page<Category> findByOwnerIdAndActiveTrue(Long ownerId, Pageable pageable);
+    Optional<Category> findByIdAndOwnerIdAndActiveTrue(Long id, Long ownerId);
+    Optional<Category> findByNameAndOwnerId(String name, Long ownerId);
 }

@@ -10,7 +10,11 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "budgets", ignore = true)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "transactions", ignore = true)
     Category toEntity(CategoryRequestDto dto);
 
     CategoryResponseDto toDto(Category entity);

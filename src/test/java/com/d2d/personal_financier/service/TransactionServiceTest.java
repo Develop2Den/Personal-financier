@@ -2,13 +2,18 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.HtmlSanitizerService;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
+import com.d2d.personal_financier.dto.transaction_dto.TransactionRequestDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransferRequestDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransferResponseDto;
 import com.d2d.personal_financier.entity.Account;
+import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.Transaction;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.exception.InsufficientBalanceException;
 import com.d2d.personal_financier.exception.InvalidTransferException;
+import com.d2d.personal_financier.exception.AccountNotFoundException;
+import com.d2d.personal_financier.exception.CategoryNotFoundException;
 import com.d2d.personal_financier.mapper.TransactionMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.repository.CategoryRepository;
@@ -66,8 +71,8 @@ class TransactionServiceTest {
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(sanitizer.sanitize("Card to cash")).thenReturn("Card to cash");
-        when(accountRepository.findByIdAndOwnerId(10L, 1L)).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByIdAndOwnerId(11L, 1L)).thenReturn(Optional.of(toAccount));
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(11L, 1L)).thenReturn(Optional.of(toAccount));
         doAnswer(invocation -> {
             Transaction transaction = invocation.getArgument(0);
             if (transaction.getId() == null) {
@@ -105,7 +110,7 @@ class TransactionServiceTest {
         );
         assertEquals("Source and destination accounts must be different", exception.getMessage());
 
-        verify(accountRepository, never()).findByIdAndOwnerId(any(), any());
+        verify(accountRepository, never()).findByIdAndOwnerIdAndActiveTrue(any(), any());
     }
 
     @Test
@@ -115,8 +120,8 @@ class TransactionServiceTest {
         Account toAccount = buildAccount(11L, "USD", "100.00", user);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
-        when(accountRepository.findByIdAndOwnerId(10L, 1L)).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByIdAndOwnerId(11L, 1L)).thenReturn(Optional.of(toAccount));
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(11L, 1L)).thenReturn(Optional.of(toAccount));
 
         TransferRequestDto request =
                 new TransferRequestDto(10L, 11L, new BigDecimal("150.00"), "Card to cash", LocalDateTime.now());
@@ -126,6 +131,48 @@ class TransactionServiceTest {
                 () -> transactionService.transferBetweenAccounts(request)
         );
         assertEquals("Insufficient balance for account id: 10", exception.getMessage());
+    }
+
+    @Test
+    void createTransactionShouldRejectArchivedAccount() {
+        User user = User.builder().id(1L).build();
+
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.empty());
+
+        TransactionRequestDto request = new TransactionRequestDto(
+            new BigDecimal("10.00"),
+            TransactionType.EXPENSE,
+            "Archived account",
+            LocalDateTime.now(),
+            10L,
+            20L
+        );
+
+        assertThrows(AccountNotFoundException.class, () -> transactionService.createTransaction(request));
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void createTransactionShouldRejectArchivedCategory() {
+        User user = User.builder().id(1L).build();
+        Account account = buildAccount(10L, "USD", "100.00", user);
+
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(account));
+        when(categoryRepository.findByIdAndOwnerIdAndActiveTrue(20L, 1L)).thenReturn(Optional.empty());
+
+        TransactionRequestDto request = new TransactionRequestDto(
+            new BigDecimal("10.00"),
+            TransactionType.EXPENSE,
+            "Archived category",
+            LocalDateTime.now(),
+            10L,
+            20L
+        );
+
+        assertThrows(CategoryNotFoundException.class, () -> transactionService.createTransaction(request));
+        verify(transactionRepository, never()).save(any());
     }
 
     private Account buildAccount(Long id, String currency, String balance, User user) {

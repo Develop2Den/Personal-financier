@@ -190,12 +190,12 @@ class UserJourneyWebMvcTest {
         );
 
         when(accountService.createAccount(any())).thenReturn(
-            new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD)
+            new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD, true)
         );
 
         when(categoryService.createCategory(any())).thenReturn(
-            new CategoryResponseDto(20L, "Food", TransactionType.EXPENSE),
-            new CategoryResponseDto(21L, "Salary", TransactionType.INCOME)
+            new CategoryResponseDto(20L, "Food", TransactionType.EXPENSE, true),
+            new CategoryResponseDto(21L, "Salary", TransactionType.INCOME, true)
         );
 
         when(transactionService.createTransaction(any())).thenReturn(
@@ -451,7 +451,7 @@ class UserJourneyWebMvcTest {
 
         when(accountService.getAllAccounts(any())).thenReturn(
             new PageImpl<>(
-                List.of(new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD)),
+                List.of(new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD, true)),
                 PageRequest.of(0, 20),
                 1
             )
@@ -459,7 +459,7 @@ class UserJourneyWebMvcTest {
 
         when(categoryService.getAllCategories(any())).thenReturn(
             new PageImpl<>(
-                List.of(new CategoryResponseDto(20L, "Food", TransactionType.EXPENSE)),
+                List.of(new CategoryResponseDto(20L, "Food", TransactionType.EXPENSE, true)),
                 PageRequest.of(0, 20),
                 1
             )

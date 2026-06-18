@@ -11,7 +11,11 @@ public interface TransactionMapper {
 
     @Mapping(target = "account", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "transferDirection", ignore = true)
+    @Mapping(target = "transferReference", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Transaction toEntity(TransactionRequestDto dto);
 
     @Mapping(target = "accountId", source = "account.id")

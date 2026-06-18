@@ -86,6 +86,11 @@ public class UserService {
             throw new EmailNotVerifiedException();
         }
 
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            auditService.log(LOGIN, "DENIED", user, username, "Account archived");
+            throw new InvalidCredentialsException();
+        }
+
         loginAttemptService.loginSucceeded(username);
         auditService.log(LOGIN, "SUCCESS", user, username, "Login successful");
 
@@ -121,7 +126,9 @@ public class UserService {
 
     public void deleteUser(Long id) {
         User user = getCurrentUserById(id);
-        userRepository.delete(user);
+        user.setActive(false);
+        refreshTokenService.revokeAllForUser(user);
+        userRepository.save(user);
     }
 
     private User getCurrentUserById(Long id) {

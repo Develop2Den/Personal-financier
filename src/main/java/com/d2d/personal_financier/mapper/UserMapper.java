@@ -12,6 +12,9 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true) // пароль кодируется в сервисе
+    @Mapping(target = "verified", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "role", ignore = true)
     @Mapping(target = "transactions", ignore = true)
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "accounts", ignore = true)
@@ -25,6 +28,9 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "verified", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "role", ignore = true)
     @Mapping(target = "transactions", ignore = true)
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "accounts", ignore = true)

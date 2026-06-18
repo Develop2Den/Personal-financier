@@ -12,4 +12,8 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     List<Account> findByOwnerId(Long ownerId);
     Page<Account> findByOwnerId(Long ownerId, Pageable pageable);
     Optional<Account> findByIdAndOwnerId(Long id, Long ownerId);
+    List<Account> findByOwnerIdAndActiveTrue(Long ownerId);
+    Page<Account> findByOwnerIdAndActiveTrue(Long ownerId, Pageable pageable);
+    Optional<Account> findByIdAndOwnerIdAndActiveTrue(Long id, Long ownerId);
+    Optional<Account> findByNameAndOwnerId(String name, Long ownerId);
 }

@@ -6,6 +6,7 @@ import com.d2d.personal_financier.dto.category_dto.CategoryRequestDto;
 import com.d2d.personal_financier.dto.category_dto.CategoryResponseDto;
 import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.exception.CategoryAlreadyExistsException;
 import com.d2d.personal_financier.exception.CategoryNotFoundException;
 import com.d2d.personal_financier.mapper.CategoryMapper;
 import com.d2d.personal_financier.repository.CategoryRepository;
@@ -27,14 +28,25 @@ public class CategoryService {
 
     public CategoryResponseDto createCategory(CategoryRequestDto dto) {
 
-        Category category = categoryMapper.toEntity(dto);
-
-        category.setName(
-            sanitizer.sanitize(dto.name())
-        );
-
         User user = securityUtils.getCurrentUser();
+        String sanitizedName = sanitizer.sanitize(dto.name());
 
+        Category existingCategory = categoryRepository.findByNameAndOwnerId(sanitizedName, user.getId())
+            .orElse(null);
+
+        if (existingCategory != null) {
+            if (Boolean.TRUE.equals(existingCategory.getActive())) {
+                throw new CategoryAlreadyExistsException(sanitizedName);
+            }
+
+            existingCategory.setActive(true);
+            categoryRepository.save(existingCategory);
+
+            return categoryMapper.toDto(existingCategory);
+        }
+
+        Category category = categoryMapper.toEntity(dto);
+        category.setName(sanitizedName);
         category.setOwner(user);
 
         categoryRepository.save(category);
@@ -46,7 +58,7 @@ public class CategoryService {
 
         User user = securityUtils.getCurrentUser();
 
-        return categoryRepository.findByOwnerId(user.getId(), pageable)
+        return categoryRepository.findByOwnerIdAndActiveTrue(user.getId(), pageable)
                 .map(categoryMapper::toDto);
     }
 
@@ -54,7 +66,7 @@ public class CategoryService {
 
         User user = securityUtils.getCurrentUser();
 
-        Category category = categoryRepository.findByIdAndOwnerId(id, user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(id));
 
         return categoryMapper.toDto(category);
@@ -64,7 +76,7 @@ public class CategoryService {
 
         User user = securityUtils.getCurrentUser();
 
-        Category category = categoryRepository.findByIdAndOwnerId(id, user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(id));
 
         category.setName(dto.name());
@@ -79,10 +91,11 @@ public class CategoryService {
 
         User user = securityUtils.getCurrentUser();
 
-        Category category = categoryRepository.findByIdAndOwnerId(id, user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(id));
 
-        categoryRepository.delete(category);
+        category.setActive(false);
+        categoryRepository.save(category);
     }
 }
 

@@ -37,6 +37,8 @@ public class RefreshTokenService {
 
     public AuthResponseDto createTokenPair(User user) {
 
+        ensureUserActive(user);
+
         String accessToken = jwtProvider.generateAccessToken(user);
         String refreshTokenValue = UUID.randomUUID().toString();
 
@@ -74,6 +76,8 @@ public class RefreshTokenService {
         currentToken.setLastUsedAt(LocalDateTime.now());
 
         User user = currentToken.getOwner();
+        ensureUserActive(user);
+
         AuthResponseDto response = createTokenPair(user);
 
         auditService.log(TOKEN_REFRESH, "SUCCESS", user, user.getUsername(), "Refresh token rotated");
@@ -115,6 +119,13 @@ public class RefreshTokenService {
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm is not available", e);
+        }
+    }
+
+    private void ensureUserActive(User user) {
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            auditService.log(TOKEN_REFRESH, FAILED, user, user.getUsername(), "Inactive account");
+            throw new InvalidRefreshTokenException();
         }
     }
 }

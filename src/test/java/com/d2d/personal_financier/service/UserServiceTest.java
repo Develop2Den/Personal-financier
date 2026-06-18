@@ -5,6 +5,7 @@ import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.dto.auth_dto.AuthResponseDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.exception.EmailNotVerifiedException;
+import com.d2d.personal_financier.exception.InvalidCredentialsException;
 import com.d2d.personal_financier.repository.UserRepository;
 import com.d2d.personal_financier.mapper.UserMapper;
 import org.junit.jupiter.api.Test;
@@ -90,5 +91,42 @@ class UserServiceTest {
 
         assertThrows(EmailNotVerifiedException.class, () -> userService.login("denisdev", "MyPass123!"));
         verify(refreshTokenService, never()).createTokenPair(any());
+    }
+
+    @Test
+    void loginShouldRejectInactiveUser() {
+        User user = User.builder()
+            .id(7L)
+            .username("denisdev")
+            .password("encoded")
+            .verified(true)
+            .active(false)
+            .build();
+
+        when(loginAttemptService.isBlocked("denisdev")).thenReturn(false);
+        when(userRepository.findByUsername("denisdev")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("MyPass123!", "encoded")).thenReturn(true);
+
+        assertThrows(InvalidCredentialsException.class, () -> userService.login("denisdev", "MyPass123!"));
+        verify(refreshTokenService, never()).createTokenPair(any());
+    }
+
+    @Test
+    void deleteUserShouldArchiveAndRevokeTokens() {
+        User user = User.builder()
+            .id(7L)
+            .username("denisdev")
+            .active(true)
+            .build();
+
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+
+        userService.deleteUser(7L);
+
+        assertEquals(false, user.getActive());
+        verify(refreshTokenService).revokeAllForUser(user);
+        verify(userRepository).save(user);
+        verify(userRepository, never()).delete(any());
     }
 }

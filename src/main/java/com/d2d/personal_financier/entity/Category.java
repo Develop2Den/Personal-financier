@@ -30,14 +30,18 @@ public class Category {
     @Column(name = "type", nullable = false, length = 20)
     private TransactionType type;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User owner;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category")
     private List<Transaction> transactions;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category")
     private List<Budget> budgets;
 }
 

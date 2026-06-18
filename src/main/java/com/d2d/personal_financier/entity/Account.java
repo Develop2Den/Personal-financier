@@ -35,10 +35,13 @@ public class Account {
     @Column(nullable = false, length = 20)
     private AccountType type;
 
+    @Column(nullable = false)
+    private Boolean active = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "account")
     private List<Transaction> transactions;
 }

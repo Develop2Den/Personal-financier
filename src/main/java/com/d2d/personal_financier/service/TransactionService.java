@@ -47,10 +47,10 @@ public class TransactionService {
 
         User user = securityUtils.getCurrentUser();
 
-        Account account = accountRepository.findByIdAndOwnerId(dto.accountId(), user.getId())
+        Account account = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.accountId(), user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(dto.accountId()));
 
-        Category category = categoryRepository.findByIdAndOwnerId(dto.categoryId(), user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(dto.categoryId(), user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         Transaction transaction = transactionMapper.toEntity(dto);
@@ -101,10 +101,10 @@ public class TransactionService {
             throw new InvalidTransferException("Source and destination accounts must be different");
         }
 
-        Account fromAccount = accountRepository.findByIdAndOwnerId(dto.fromAccountId(), user.getId())
+        Account fromAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.fromAccountId(), user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(dto.fromAccountId()));
 
-        Account toAccount = accountRepository.findByIdAndOwnerId(dto.toAccountId(), user.getId())
+        Account toAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.toAccountId(), user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(dto.toAccountId()));
 
         if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {

@@ -3,6 +3,7 @@ package com.d2d.personal_financier.config.security.jwt;
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,10 +42,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (!jwtBlacklistService.isBlacklisted(token)) {
 
                 Optional<String> username = jwtProvider.getValidatedClaims(token)
-                    .map(claims -> claims.getSubject());
+                    .map(Claims::getSubject);
 
                 User user = username
-                    .flatMap(userRepository::findByUsername)
+                    .flatMap(userRepository::findByUsernameAndActiveTrue)
                     .orElse(null);
 
                 if (user != null && Boolean.TRUE.equals(user.getVerified())) {

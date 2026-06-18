@@ -21,6 +21,9 @@ public record AccountResponseDto(
         BigDecimal balance,
 
         @Schema(description = "Type of account (CASH, CARD, BANK, CRYPTO)", example = "CARD")
-        AccountType type
+        AccountType type,
+
+        @Schema(description = "Account active status", example = "true")
+        Boolean active
 
 ) {}

@@ -11,6 +11,7 @@ public interface BudgetMapper {
 
     @Mapping(target = "owner", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Budget toEntity(BudgetRequestDto dto);
 
     @Mapping(target = "categoryId", source = "category.id")

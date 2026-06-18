@@ -31,7 +31,7 @@ public class BudgetService {
 
         User user = securityUtils.getCurrentUser();
 
-        Category category = categoryRepository.findByIdAndOwnerId(dto.categoryId(), user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(dto.categoryId(), user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         Budget budget = budgetMapper.toEntity(dto);
@@ -69,7 +69,7 @@ public class BudgetService {
         Budget budget = budgetRepository.findByIdAndOwnerId(id, user.getId())
                 .orElseThrow(() -> new BudgetNotFoundException(id));
 
-        Category category = categoryRepository.findByIdAndOwnerId(dto.categoryId(), user.getId())
+        Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(dto.categoryId(), user.getId())
                 .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         budget.setCategory(category);

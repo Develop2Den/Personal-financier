@@ -52,23 +52,23 @@ public class User {
     private Role role = Role.USER;
 
     @Builder.Default
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private List<Transaction> transactions = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private List<Category> categories = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private List<Account> accounts = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private List<Goal> goals = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private List<Budget> budgets = new ArrayList<>();
 
     @PrePersist
