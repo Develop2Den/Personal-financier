@@ -5,8 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+
     depends_on:
       - db
+      - redis
+
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/financeDB
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -14,21 +17,44 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - JWT_SECRET=VGhpcy1pcy1teS1zdXBlci1zZWNyZXQta2V5LXdpdGgtYmFzZTY0LXN0cmluZw==
+      - JWT_EXPIRATION=86400000
+      - MAIL_ADDRESS=FinalProjectLinkedin@gmail.com
+      - MAIL_PASSWORD=upiv trwk upsc snjo
+
     ports:
       - "8989:8080"
+
     restart: always
 
   db:
     image: postgres:17.1
     container_name: personal_financier
+
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=prsfin123
       - POSTGRES_DB=financeDB
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     ports:
       - "5432:5432"
+
     restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: personal_financier_redis
+
+    ports:
+      - "6379:6379"
+
+    restart: always
+
 volumes:
   postgres_data:

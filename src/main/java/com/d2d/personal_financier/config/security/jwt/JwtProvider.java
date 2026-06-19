@@ -1,14 +1,10 @@
 package com.d2d.personal_financier.config.security.jwt;
 
 import com.d2d.personal_financier.entity.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.SecurityException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,6 +95,10 @@ public class JwtProvider {
         }
 
         return Optional.empty();
+    }
+
+    public Date getExpirationDate(String token) {
+        return getClaims(token).getExpiration();
     }
 
     public boolean validateToken(String token) {
