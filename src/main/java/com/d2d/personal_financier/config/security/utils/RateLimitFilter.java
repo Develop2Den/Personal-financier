@@ -27,9 +27,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
         throws ServletException, IOException {
 
+        String path = request.getServletPath();
+
+        if (path.startsWith("/swagger-ui")
+            || path.startsWith("/v3/api-docs")) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String ip = request.getRemoteAddr();
 
-        Bucket bucket = rateLimitService.resolveBucket(ip, request.getServletPath());
+        Bucket bucket = rateLimitService.resolveBucket(ip, path);
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
         if (probe.isConsumed()) {
@@ -37,6 +46,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } else {
+
             long retryAfterSeconds = Math.max(
                 1,
                 TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill()) +
@@ -45,8 +55,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
-            errorResponseWriter.write(request, response, HttpStatus.TOO_MANY_REQUESTS, "Too many requests");
 
+            errorResponseWriter.write(
+                request,
+                response,
+                HttpStatus.TOO_MANY_REQUESTS,
+                "Too many requests"
+            );
         }
     }
 }
