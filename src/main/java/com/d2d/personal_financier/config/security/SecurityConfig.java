@@ -12,11 +12,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -47,8 +49,11 @@ public class SecurityConfig {
                 headers.referrerPolicy(referrer ->
                     referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
                 );
-                headers.permissionsPolicy(permissions ->
-                    permissions.policy(securityProperties.getHeaders().getPermissionsPolicy())
+                headers.addHeaderWriter(
+                    new StaticHeadersWriter(
+                        "Permissions-Policy",
+                        securityProperties.getHeaders().getPermissionsPolicy()
+                    )
                 );
                 headers.cacheControl(Customizer.withDefaults());
                 headers.httpStrictTransportSecurity(hsts ->
@@ -102,5 +107,14 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            throw new UnsupportedOperationException(
+                "Not supported"
+            );
+        };
     }
 }
