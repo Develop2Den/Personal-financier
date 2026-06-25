@@ -1,5 +1,6 @@
 package com.d2d.personal_financier.ai.service;
 
+import com.d2d.personal_financier.ai.dto.FinancialContextDto;
 import com.d2d.personal_financier.ai.provider.AiProvider;
 import com.d2d.personal_financier.ai.provider.AiProviderFactory;
 import lombok.RequiredArgsConstructor;
@@ -11,21 +12,14 @@ public class AiServiceImpl implements AiService {
 
     private final AiProviderFactory aiProviderFactory;
     private final FinancialContextService financialContextService;
+    private final PromptBuilderService promptBuilderService;
 
     @Override
     public String ask(String question) {
 
-        String context = financialContextService.buildContext();
+        FinancialContextDto context = financialContextService.buildContext();
 
-        String prompt = """
-            You are a financial assistant.
-
-            Financial data:
-            %s
-
-            User question:
-            %s
-            """.formatted(context, question);
+        String prompt = promptBuilderService.buildPrompt(context, question);
 
         AiProvider provider = aiProviderFactory.getProvider();
 

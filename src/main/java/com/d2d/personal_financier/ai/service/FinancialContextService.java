@@ -1,40 +1,44 @@
 package com.d2d.personal_financier.ai.service;
 
+import com.d2d.personal_financier.ai.dto.AccountSummaryDto;
+import com.d2d.personal_financier.ai.dto.FinancialContextDto;
+import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
+import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class FinancialContextService {
 
     private final AnalyticsService analyticsService;
+    private final AccountRepository accountRepository;
+    private final SecurityUtils securityUtils;
 
-    public String buildContext() {
+    public FinancialContextDto buildContext() {
 
         DashboardDto dashboard = analyticsService.getDashboard(null);
+        User user = securityUtils.getCurrentUser();
 
-        return """
-            Financial Summary:
+        List<AccountSummaryDto> accounts =
+            accountRepository.findByOwnerId(user.getId())
+                .stream()
+                .map(account -> new AccountSummaryDto(
+                    account.getName(),
+                    account.getType(),
+                    account.getBalance(),
+                    account.getCurrency()
+                ))
+                .toList();
 
-            Total Balance: %s UAH
-            Monthly Income: %s UAH
-            Monthly Expenses: %s UAH
-            Net Cashflow: %s UAH
-
-            Top Expense Category: %s
-            Active Goals: %d
-            Monthly Transaction Count: %d
-            """
-            .formatted(
-                dashboard.totalBalance(),
-                dashboard.monthlyIncome(),
-                dashboard.monthlyExpenses(),
-                dashboard.netCashflow(),
-                dashboard.topExpenseCategory(),
-                dashboard.activeGoals(),
-                dashboard.monthlyTransactionCount()
-            );
+        return new FinancialContextDto(
+            dashboard,
+            accounts
+        );
     }
 }
