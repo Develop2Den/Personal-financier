@@ -8,9 +8,9 @@ public record FinancialContextDto(
 
     DashboardDto dashboard,
 
-    List<AccountSummaryDto> accounts
+    List<AccountSummaryDto> accounts,
 
-//    List<GoalSummaryDto> goals,
+    List<GoalSummaryDto> goals
 //
 //    List<TransactionSummaryDto> recentTransactions,
 //

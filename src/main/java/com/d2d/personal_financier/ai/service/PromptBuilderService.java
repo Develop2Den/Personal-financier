@@ -16,6 +16,14 @@ public class PromptBuilderService {
         Currency: %s
         """;
 
+    private static final String GOAL_TEMPLATE = """
+        Name: %s
+        Target Amount: %s
+        Current Amount: %s
+        Deadline: %s
+        Status: %s
+        """;
+
     private static final String SYSTEM_RULES = """
         You are Personal Financier AI.
 
@@ -26,10 +34,11 @@ public class PromptBuilderService {
         - Never invent balances.
         - Never modify balances.
         - Never invent currencies.
+        - Never invent financial goals.
         - Never infer or estimate financial information.
         - Never convert currencies unless exchange rates are explicitly provided.
         - If accounts use different currencies, NEVER calculate one total balance across all accounts.
-        - Group balances by currency instead.
+        - Treat each financial goal independently.
         - If information is unavailable, explicitly say that it is unavailable.
         - Be concise, accurate and professional.
         """;
@@ -50,6 +59,17 @@ public class PromptBuilderService {
             ))
             .collect(Collectors.joining("\n------------------\n"));
 
+        String goals = context.goals()
+            .stream()
+            .map(goal -> GOAL_TEMPLATE.formatted(
+                goal.name(),
+                goal.targetAmount(),
+                goal.currentAmount(),
+                goal.deadline(),
+                goal.status()
+            ))
+            .collect(Collectors.joining("\n------------------\n"));
+
         return SYSTEM_RULES + """
 
             === FINANCIAL SUMMARY ===
@@ -66,6 +86,10 @@ public class PromptBuilderService {
 
             %s
 
+            === GOALS ===
+
+            %s
+
             === USER QUESTION ===
 
             %s
@@ -78,6 +102,7 @@ public class PromptBuilderService {
                 dashboard.activeGoals(),
                 dashboard.monthlyTransactionCount(),
                 accounts,
+                goals,
                 question
             );
     }
