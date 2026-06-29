@@ -10,10 +10,10 @@ public record FinancialContextDto(
 
     List<AccountSummaryDto> accounts,
 
-    List<GoalSummaryDto> goals
-//
-//    List<TransactionSummaryDto> recentTransactions,
-//
+    List<GoalSummaryDto> goals,
+
+    List<TransactionSummaryDto> transactions
+
 //    List<CategorySummaryDto> topCategories
 
 ) {

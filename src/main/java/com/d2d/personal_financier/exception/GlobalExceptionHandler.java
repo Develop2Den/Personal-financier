@@ -3,6 +3,7 @@ package com.d2d.personal_financier.exception;
 import com.d2d.personal_financier.dto.error.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -101,6 +103,8 @@ public class GlobalExceptionHandler {
         Exception ex,
         HttpServletRequest request) {
 
+        log.error("Unhandled exception", ex);
+
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Internal server error",
@@ -112,3 +116,5 @@ public class GlobalExceptionHandler {
             .body(error);
     }
 }
+
+

@@ -3,13 +3,17 @@ package com.d2d.personal_financier.ai.service;
 import com.d2d.personal_financier.ai.dto.AccountSummaryDto;
 import com.d2d.personal_financier.ai.dto.FinancialContextDto;
 import com.d2d.personal_financier.ai.dto.GoalSummaryDto;
+import com.d2d.personal_financier.ai.dto.TransactionSummaryDto;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.repository.GoalRepository;
+import com.d2d.personal_financier.repository.TransactionRepository;
 import com.d2d.personal_financier.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,12 +25,13 @@ public class FinancialContextService {
     private final AnalyticsService analyticsService;
     private final AccountRepository accountRepository;
     private final GoalRepository goalRepository;
+    private final TransactionRepository transactionRepository;
     private final SecurityUtils securityUtils;
 
     public FinancialContextDto buildContext() {
 
-        User user = securityUtils.getCurrentUser();
         DashboardDto dashboard = analyticsService.getDashboard(null);
+        User user = securityUtils.getCurrentUser();
 
         List<AccountSummaryDto> accounts =
             accountRepository.findByOwnerId(user.getId())
@@ -51,10 +56,32 @@ public class FinancialContextService {
                 ))
                 .toList();
 
+        List<TransactionSummaryDto> transactions =
+            transactionRepository.findByOwnerId(
+                    user.getId(),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "date"))
+                )
+                .getContent()
+                .stream()
+                .map(transaction -> new TransactionSummaryDto(
+                    transaction.getDate(),
+                    transaction.getType(),
+                    transaction.getAmount(),
+                    transaction.getAccount().getCurrency(),
+                    transaction.getAccount().getName(),
+                    transaction.getCategory() != null
+                        ? transaction.getCategory().getName()
+                        : null,
+                    transaction.getDescription(),
+                    transaction.getTransferDirection()
+                ))
+                .toList();
+
         return new FinancialContextDto(
             dashboard,
             accounts,
-            goals
+            goals,
+            transactions
         );
     }
 }

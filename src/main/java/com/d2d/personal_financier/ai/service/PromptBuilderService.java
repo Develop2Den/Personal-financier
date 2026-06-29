@@ -24,6 +24,17 @@ public class PromptBuilderService {
         Status: %s
         """;
 
+    private static final String TRANSACTION_TEMPLATE = """
+        Date: %s
+        Type: %s
+        Amount: %s
+        Currency: %s
+        Account: %s
+        Category: %s
+        Description: %s
+        Transfer Direction: %s
+        """;
+
     private static final String SYSTEM_RULES = """
         You are Personal Financier AI.
 
@@ -70,6 +81,20 @@ public class PromptBuilderService {
             ))
             .collect(Collectors.joining("\n------------------\n"));
 
+        String transactions = context.transactions()
+            .stream()
+            .map(transaction -> TRANSACTION_TEMPLATE.formatted(
+                transaction.date(),
+                transaction.type(),
+                transaction.amount(),
+                transaction.currency(),
+                transaction.account(),
+                transaction.category(),
+                transaction.description(),
+                transaction.transferDirection()
+            ))
+            .collect(Collectors.joining("\n------------------\n"));
+
         return SYSTEM_RULES + """
 
             === FINANCIAL SUMMARY ===
@@ -90,6 +115,10 @@ public class PromptBuilderService {
 
             %s
 
+            === TRANSACTIONS ===
+
+            %s
+
             === USER QUESTION ===
 
             %s
@@ -103,6 +132,7 @@ public class PromptBuilderService {
                 dashboard.monthlyTransactionCount(),
                 accounts,
                 goals,
+                transactions,
                 question
             );
     }
