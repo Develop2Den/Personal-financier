@@ -8,6 +8,8 @@ public record FinancialContextDto(
 
     DashboardDto dashboard,
 
+    FinancialMetricsDto metrics,
+
     List<AccountSummaryDto> accounts,
 
     List<GoalSummaryDto> goals,
@@ -15,6 +17,5 @@ public record FinancialContextDto(
     List<TransactionSummaryDto> transactions,
 
     List<CategorySummaryDto> categories
-
 ) {
 }

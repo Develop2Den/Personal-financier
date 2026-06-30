@@ -9,6 +9,27 @@ import java.util.stream.Collectors;
 @Service
 public class PromptBuilderService {
 
+    private static final String DASHBOARD_TEMPLATE = """
+        Monthly Income: %s
+        Monthly Expenses: %s
+        Net Cashflow: %s
+
+        Top Expense Category: %s
+        Active Goals: %d
+        Monthly Transaction Count: %d
+        """;
+
+    private static final String METRICS_TEMPLATE = """
+        Analyzed Goal: %s
+        Remaining Amount: %s
+        Goal Completion: %s%%
+        Largest Expense: %s
+        Largest Income: %s
+        Average Expense: %s
+        Richest Account: %s
+        Active Accounts: %s
+        """;
+
     private static final String ACCOUNT_TEMPLATE = """
         Name: %s
         Type: %s
@@ -46,7 +67,14 @@ public class PromptBuilderService {
 
         Important rules:
 
+        GENERAL
+
         - Answer ONLY questions related to the user's personal finances.
+        - Answer in the same language as the user's question.
+        - Be concise, accurate and professional.
+
+        FINANCIAL DATA
+
         - Use ONLY the provided financial data.
         - Never invent balances.
         - Never modify balances.
@@ -55,9 +83,23 @@ public class PromptBuilderService {
         - Never infer or estimate financial information.
         - Never convert currencies unless exchange rates are explicitly provided.
         - If accounts use different currencies, NEVER calculate one total balance across all accounts.
-        - Treat each financial goal independently.
+        - Keep all account names, goal names, category names and currencies exactly as provided in the financial data.
+        - Do NOT translate account names, goal names, category names or currencies unless the user explicitly requests a translation.
+
+        FINANCIAL METRICS
+
+        - The FINANCIAL METRICS section contains values calculated by the backend.
+        - Always trust FINANCIAL METRICS over your own calculations.
+        - Do not recalculate values that already exist in FINANCIAL METRICS.
+        - The analyzed goal is selected automatically by the backend as the nearest ACTIVE goal by deadline.
+        - If the user asks why this goal is being analyzed, explain that it was automatically selected because it has the nearest deadline among active goals.
+
+        RESPONSES
+
+        - Use exact numbers whenever they are available.
+        - Prefer concrete financial values over vague phrases like "almost", "soon", or "a lot".
         - If information is unavailable, explicitly say that it is unavailable.
-        - Be concise, accurate and professional.
+        - Do not claim you selected the analyzed goal yourself. The backend selects it automatically.
         """;
 
     public String buildPrompt(
@@ -65,6 +107,26 @@ public class PromptBuilderService {
         String question) {
 
         DashboardDto dashboard = context.dashboard();
+
+        String dashboardSummary = DASHBOARD_TEMPLATE.formatted(
+            dashboard.monthlyIncome(),
+            dashboard.monthlyExpenses(),
+            dashboard.netCashflow(),
+            dashboard.topExpenseCategory(),
+            dashboard.activeGoals(),
+            dashboard.monthlyTransactionCount()
+        );
+
+        String metrics = METRICS_TEMPLATE.formatted(
+            context.metrics().analyzedGoalName(),
+            context.metrics().remainingGoalAmount(),
+            context.metrics().goalCompletionPercentage(),
+            context.metrics().largestExpense(),
+            context.metrics().largestIncome(),
+            context.metrics().averageExpense(),
+            context.metrics().richestAccount(),
+            context.metrics().activeAccounts()
+        );
 
         String accounts = context.accounts()
             .stream()
@@ -114,13 +176,11 @@ public class PromptBuilderService {
 
             === FINANCIAL SUMMARY ===
 
-            Monthly Income: %s
-            Monthly Expenses: %s
-            Net Cashflow: %s
+            %s
 
-            Top Expense Category: %s
-            Active Goals: %d
-            Monthly Transaction Count: %d
+            === FINANCIAL METRICS ===
+
+            %s
 
             === ACCOUNTS ===
 
@@ -143,12 +203,8 @@ public class PromptBuilderService {
             %s
             """
             .formatted(
-                dashboard.monthlyIncome(),
-                dashboard.monthlyExpenses(),
-                dashboard.netCashflow(),
-                dashboard.topExpenseCategory(),
-                dashboard.activeGoals(),
-                dashboard.monthlyTransactionCount(),
+                dashboardSummary,
+                metrics,
                 accounts,
                 goals,
                 transactions,

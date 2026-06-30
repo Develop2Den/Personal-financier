@@ -24,12 +24,14 @@ public class FinancialContextService {
     private final AccountRepository accountRepository;
     private final GoalRepository goalRepository;
     private final TransactionRepository transactionRepository;
+    private final FinancialMetricsService financialMetricsService;
     private final CategoryRepository categoryRepository;
     private final SecurityUtils securityUtils;
 
     public FinancialContextDto buildContext() {
 
         DashboardDto dashboard = analyticsService.getDashboard(null);
+        FinancialMetricsDto metrics = financialMetricsService.buildMetrics();
         User user = securityUtils.getCurrentUser();
 
         List<AccountSummaryDto> accounts =
@@ -88,6 +90,7 @@ public class FinancialContextService {
 
         return new FinancialContextDto(
             dashboard,
+            metrics,
             accounts,
             goals,
             transactions,
