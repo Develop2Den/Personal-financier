@@ -35,6 +35,12 @@ public class PromptBuilderService {
         Transfer Direction: %s
         """;
 
+    private static final String CATEGORY_TEMPLATE = """
+        Name: %s
+        Type: %s
+        Active: %s
+        """;
+
     private static final String SYSTEM_RULES = """
         You are Personal Financier AI.
 
@@ -95,6 +101,15 @@ public class PromptBuilderService {
             ))
             .collect(Collectors.joining("\n------------------\n"));
 
+        String categories = context.categories()
+            .stream()
+            .map(category -> CATEGORY_TEMPLATE.formatted(
+                category.name(),
+                category.type(),
+                category.active()
+            ))
+            .collect(Collectors.joining("\n------------------\n"));
+
         return SYSTEM_RULES + """
 
             === FINANCIAL SUMMARY ===
@@ -119,6 +134,10 @@ public class PromptBuilderService {
 
             %s
 
+            === CATEGORIES ===
+
+            %s
+
             === USER QUESTION ===
 
             %s
@@ -133,6 +152,7 @@ public class PromptBuilderService {
                 accounts,
                 goals,
                 transactions,
+                categories,
                 question
             );
     }

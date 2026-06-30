@@ -12,9 +12,9 @@ public record FinancialContextDto(
 
     List<GoalSummaryDto> goals,
 
-    List<TransactionSummaryDto> transactions
+    List<TransactionSummaryDto> transactions,
 
-//    List<CategorySummaryDto> topCategories
+    List<CategorySummaryDto> categories
 
 ) {
 }

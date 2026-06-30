@@ -1,13 +1,11 @@
 package com.d2d.personal_financier.ai.service;
 
-import com.d2d.personal_financier.ai.dto.AccountSummaryDto;
-import com.d2d.personal_financier.ai.dto.FinancialContextDto;
-import com.d2d.personal_financier.ai.dto.GoalSummaryDto;
-import com.d2d.personal_financier.ai.dto.TransactionSummaryDto;
+import com.d2d.personal_financier.ai.dto.*;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.repository.AccountRepository;
+import com.d2d.personal_financier.repository.CategoryRepository;
 import com.d2d.personal_financier.repository.GoalRepository;
 import com.d2d.personal_financier.repository.TransactionRepository;
 import com.d2d.personal_financier.service.AnalyticsService;
@@ -26,6 +24,7 @@ public class FinancialContextService {
     private final AccountRepository accountRepository;
     private final GoalRepository goalRepository;
     private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
     private final SecurityUtils securityUtils;
 
     public FinancialContextDto buildContext() {
@@ -77,11 +76,22 @@ public class FinancialContextService {
                 ))
                 .toList();
 
+        List<CategorySummaryDto> categories =
+            categoryRepository.findByOwnerIdAndActiveTrue(user.getId())
+                .stream()
+                .map(category -> new CategorySummaryDto(
+                    category.getName(),
+                    category.getType(),
+                    category.getActive()
+                ))
+                .toList();
+
         return new FinancialContextDto(
             dashboard,
             accounts,
             goals,
-            transactions
+            transactions,
+            categories
         );
     }
 }
