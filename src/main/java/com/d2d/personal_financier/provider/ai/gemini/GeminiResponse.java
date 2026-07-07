@@ -1,4 +1,4 @@
-package com.d2d.personal_financier.ai.provider.gemini;
+package com.d2d.personal_financier.provider.ai.gemini;
 
 import java.util.List;
 

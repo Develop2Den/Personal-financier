@@ -1,4 +1,4 @@
-package com.d2d.personal_financier.ai.provider;
+package com.d2d.personal_financier.provider.ai;
 
 import com.d2d.personal_financier.ai.config.AiProperties;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ public class AiProviderFactory {
     private final AiProperties aiProperties;
     private final MockAiProvider mockAiProvider;
     private final GeminiProvider geminiProvider;
-    
+
     public AiProvider getProvider() {
 
         return switch (aiProperties.getProvider()) {

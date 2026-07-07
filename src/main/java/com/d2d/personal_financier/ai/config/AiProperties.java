@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.ai.config;
 
-import com.d2d.personal_financier.ai.provider.AiProviderType;
+import com.d2d.personal_financier.provider.ai.AiProviderType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;

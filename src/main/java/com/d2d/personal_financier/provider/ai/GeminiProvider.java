@@ -1,8 +1,8 @@
-package com.d2d.personal_financier.ai.provider;
+package com.d2d.personal_financier.provider.ai;
 
 import com.d2d.personal_financier.ai.config.AiProperties;
-import com.d2d.personal_financier.ai.provider.gemini.GeminiRequest;
-import com.d2d.personal_financier.ai.provider.gemini.GeminiResponse;
+import com.d2d.personal_financier.provider.ai.gemini.GeminiRequest;
+import com.d2d.personal_financier.provider.ai.gemini.GeminiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

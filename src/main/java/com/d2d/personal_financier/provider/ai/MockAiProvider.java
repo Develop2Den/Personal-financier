@@ -1,4 +1,4 @@
-package com.d2d.personal_financier.ai.provider;
+package com.d2d.personal_financier.provider.ai;
 
 import org.springframework.stereotype.Component;
 
