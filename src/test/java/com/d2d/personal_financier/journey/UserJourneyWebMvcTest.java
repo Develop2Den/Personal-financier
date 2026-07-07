@@ -29,6 +29,7 @@ import com.d2d.personal_financier.dto.transaction_dto.TransferResponseDto;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.AccountType;
 import com.d2d.personal_financier.entity.enums.BudgetPeriod;
+import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.exception.GlobalExceptionHandler;
 import com.d2d.personal_financier.exception.InvalidRefreshTokenException;
@@ -190,7 +191,7 @@ class UserJourneyWebMvcTest {
         );
 
         when(accountService.createAccount(any())).thenReturn(
-            new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD, true)
+            new AccountResponseDto(10L, "Main Card", Currency.USD, new BigDecimal("1000.00"), AccountType.CARD, true)
         );
 
         when(categoryService.createCategory(any())).thenReturn(
@@ -206,7 +207,7 @@ class UserJourneyWebMvcTest {
             new TransferResponseDto(
                 "transfer-ref",
                 new BigDecimal("100.00"),
-                "USD",
+                Currency.USD,
                 "Card to cash",
                 now,
                 10L,
@@ -446,12 +447,31 @@ class UserJourneyWebMvcTest {
     }
 
     @Test
+    void createAccountShouldReturnBadRequestForInvalidCurrency() throws Exception {
+        mockMvc.perform(post("/api/accounts")
+                .with(user("denisdev"))
+                .contentType(APPLICATION_JSON)
+                .content("""
+                    {
+                      "name": "Main Card",
+                      "currency": "ABC",
+                      "balance": 1000.00,
+                      "type": "CARD"
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.message").value("Invalid request body"))
+            .andExpect(jsonPath("$.path").value("/api/accounts"));
+    }
+
+    @Test
     void pagedListEndpointsShouldReturnSpringPagePayload() throws Exception {
         String username = "denisdev";
 
         when(accountService.getAllAccounts(any())).thenReturn(
             new PageImpl<>(
-                List.of(new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("1000.00"), AccountType.CARD, true)),
+                List.of(new AccountResponseDto(10L, "Main Card", Currency.USD, new BigDecimal("1000.00"), AccountType.CARD, true)),
                 PageRequest.of(0, 20),
                 1
             )
@@ -521,7 +541,7 @@ class UserJourneyWebMvcTest {
             new TransferResponseDto(
                 "transfer-ref",
                 new BigDecimal("150.00"),
-                "USD",
+                Currency.USD,
                 "Card to cash",
                 LocalDateTime.of(2026, 4, 27, 11, 0),
                 10L,

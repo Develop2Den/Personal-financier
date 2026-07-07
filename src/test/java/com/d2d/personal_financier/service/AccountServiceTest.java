@@ -7,6 +7,7 @@ import com.d2d.personal_financier.dto.account_dto.AccountResponseDto;
 import com.d2d.personal_financier.entity.Account;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.AccountType;
+import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.exception.AccountAlreadyExistsException;
 import com.d2d.personal_financier.mapper.AccountMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
@@ -73,9 +74,9 @@ class AccountServiceTest {
         archivedAccount.setActive(false);
 
         AccountRequestDto request =
-            new AccountRequestDto("Main Card", "USD", new BigDecimal("100.00"), AccountType.CARD);
+            new AccountRequestDto("Main Card", Currency.USD, new BigDecimal("100.00"), AccountType.CARD);
         AccountResponseDto expected =
-            new AccountResponseDto(10L, "Main Card", "USD", new BigDecimal("100.00"), AccountType.CARD, true);
+            new AccountResponseDto(10L, "Main Card", Currency.USD, new BigDecimal("100.00"), AccountType.CARD, true);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(sanitizer.sanitize("Main Card")).thenReturn("Main Card");
@@ -99,7 +100,7 @@ class AccountServiceTest {
         archivedAccount.setActive(false);
 
         AccountRequestDto request =
-            new AccountRequestDto("Main Card", "USD", new BigDecimal("100.00"), AccountType.CARD);
+            new AccountRequestDto("Main Card", Currency.USD, new BigDecimal("100.00"), AccountType.CARD);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(sanitizer.sanitize("Main Card")).thenReturn("Main Card");
@@ -121,7 +122,7 @@ class AccountServiceTest {
         activeAccount.setActive(true);
 
         AccountRequestDto request =
-            new AccountRequestDto("Main Card", "USD", new BigDecimal("100.00"), AccountType.CARD);
+            new AccountRequestDto("Main Card", Currency.USD, new BigDecimal("100.00"), AccountType.CARD);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(sanitizer.sanitize("Main Card")).thenReturn("Main Card");

@@ -1,6 +1,7 @@
 package com.d2d.personal_financier.repository;
 
 import com.d2d.personal_financier.entity.Transaction;
+import com.d2d.personal_financier.entity.enums.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -22,4 +23,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         String transferReference,
         Long ownerId
     );
+
+    List<Transaction> findByOwnerIdAndType(Long ownerId, TransactionType type);
 }

@@ -2,6 +2,7 @@ package com.d2d.personal_financier.ai.dto;
 
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.entity.enums.TransferDirection;
+import com.d2d.personal_financier.entity.enums.Currency;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public record TransactionSummaryDto(
 
     BigDecimal amount,
 
-    String currency,
+    Currency currency,
 
     String account,
 

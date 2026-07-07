@@ -1,6 +1,7 @@
 package com.d2d.personal_financier.entity;
 
 import com.d2d.personal_financier.entity.enums.AccountType;
+import com.d2d.personal_financier.entity.enums.Currency;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,8 +26,9 @@ public class Account {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 10)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 3)
+    private Currency currency;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;

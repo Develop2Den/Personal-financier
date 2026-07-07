@@ -1,5 +1,6 @@
 package com.d2d.personal_financier.dto.transaction_dto;
 
+import com.d2d.personal_financier.entity.enums.Currency;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public record TransferResponseDto(
         BigDecimal amount,
 
         @Schema(description = "Transfer currency", example = "USD")
-        String currency,
+        Currency currency,
 
         @Schema(description = "Transfer description", example = "Card to cash")
         String description,

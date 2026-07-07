@@ -10,6 +10,7 @@ import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.Goal;
 import com.d2d.personal_financier.entity.Transaction;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.repository.GoalRepository;
@@ -67,7 +68,7 @@ class AnalyticsServiceTest {
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(transactionRepository.findByOwnerId(1L)).thenReturn(buildTransactions(user));
         when(accountRepository.findByOwnerId(1L)).thenReturn(List.of(
-            new Account(1L, null, "Main", "USD", new BigDecimal("150.00"), null, true, user, List.of())
+            new Account(1L, null, "Main", Currency.USD, new BigDecimal("150.00"), null, true, user, List.of())
         ));
         when(goalRepository.findByOwnerId(1L)).thenReturn(List.of(new Goal(), new Goal()));
 

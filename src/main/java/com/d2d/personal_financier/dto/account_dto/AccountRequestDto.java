@@ -1,11 +1,11 @@
 package com.d2d.personal_financier.dto.account_dto;
 
 import com.d2d.personal_financier.entity.enums.AccountType;
+import com.d2d.personal_financier.entity.enums.Currency;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -18,14 +18,9 @@ public record AccountRequestDto(
     @Schema(description = "Account name", example = "Main Card")
     String name,
 
-    @NotBlank(message = "Currency is required")
-    @Size(max = 10, message = "Currency must not exceed 10 characters")
-    @Pattern(
-        regexp = "^[A-Z]{3,10}$",
-        message = "Currency must contain 3 to 10 uppercase Latin letters"
-    )
-    @Schema(description = "Account currency", example = "USD")
-    String currency,
+    @NotNull(message = "Currency is required")
+    @Schema(description = "Account currency", example = "USD", allowableValues = {"UAH", "USD", "EUR"})
+    Currency currency,
 
     @NotNull(message = "Balance is required")
     @DecimalMin(value = "0.00", inclusive = true, message = "Balance must be greater than or equal to 0")
@@ -40,4 +35,5 @@ public record AccountRequestDto(
     )
     AccountType type
 
-) {}
+) {
+}

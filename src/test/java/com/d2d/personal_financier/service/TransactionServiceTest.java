@@ -9,6 +9,7 @@ import com.d2d.personal_financier.entity.Account;
 import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.Transaction;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.exception.InsufficientBalanceException;
 import com.d2d.personal_financier.exception.InvalidTransferException;
@@ -65,8 +66,8 @@ class TransactionServiceTest {
     @Test
     void transferBetweenAccountsShouldMoveMoneyAndCreateTwoTransactions() {
         User user = User.builder().id(1L).build();
-        Account fromAccount = buildAccount(10L, "USD", "1000.00", user);
-        Account toAccount = buildAccount(11L, "USD", "100.00", user);
+        Account fromAccount = buildAccount(10L, Currency.USD, "1000.00", user);
+        Account toAccount = buildAccount(11L, Currency.USD, "100.00", user);
         LocalDateTime transferDate = LocalDateTime.of(2026, 4, 27, 11, 0);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
@@ -116,8 +117,8 @@ class TransactionServiceTest {
     @Test
     void transferBetweenAccountsShouldRejectInsufficientBalance() {
         User user = User.builder().id(1L).build();
-        Account fromAccount = buildAccount(10L, "USD", "50.00", user);
-        Account toAccount = buildAccount(11L, "USD", "100.00", user);
+        Account fromAccount = buildAccount(10L, Currency.USD, "50.00", user);
+        Account toAccount = buildAccount(11L, Currency.USD, "100.00", user);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(fromAccount));
@@ -156,7 +157,7 @@ class TransactionServiceTest {
     @Test
     void createTransactionShouldRejectArchivedCategory() {
         User user = User.builder().id(1L).build();
-        Account account = buildAccount(10L, "USD", "100.00", user);
+        Account account = buildAccount(10L, Currency.USD, "100.00", user);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(account));
@@ -175,7 +176,7 @@ class TransactionServiceTest {
         verify(transactionRepository, never()).save(any());
     }
 
-    private Account buildAccount(Long id, String currency, String balance, User user) {
+    private Account buildAccount(Long id, Currency currency, String balance, User user) {
         Account account = new Account();
         account.setId(id);
         account.setCurrency(currency);

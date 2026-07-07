@@ -107,7 +107,7 @@ public class TransactionService {
         Account toAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.toAccountId(), user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(dto.toAccountId()));
 
-        if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
+        if (fromAccount.getCurrency() != toAccount.getCurrency()) {
             throw new InvalidTransferException("Transfer between accounts with different currencies is not supported");
         }
 

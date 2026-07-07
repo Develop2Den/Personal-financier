@@ -1,6 +1,7 @@
 package com.d2d.personal_financier.dto.account_dto;
 
 import com.d2d.personal_financier.entity.enums.AccountType;
+import com.d2d.personal_financier.entity.enums.Currency;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public record AccountResponseDto(
         String name,
 
         @Schema(description = "Account currency", example = "USD")
-        String currency,
+        Currency currency,
 
         @Schema(description = "Current account balance", example = "850.25")
         BigDecimal balance,
