@@ -7,6 +7,7 @@ import com.d2d.personal_financier.dto.account_dto.AccountResponseDto;
 import com.d2d.personal_financier.entity.Account;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.exception.AccountAlreadyExistsException;
+import com.d2d.personal_financier.exception.AccountHasBalanceException;
 import com.d2d.personal_financier.exception.AccountNotFoundException;
 import com.d2d.personal_financier.mapper.AccountMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
@@ -84,6 +85,10 @@ public class AccountService {
 
         Account account = accountRepository.findByIdAndOwnerIdAndActiveTrue(id, user.getId())
                 .orElseThrow(() -> new AccountNotFoundException(id));
+
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountHasBalanceException();
+        }
 
         account.setActive(false);
         accountRepository.save(account);

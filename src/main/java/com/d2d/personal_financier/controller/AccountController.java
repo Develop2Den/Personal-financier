@@ -15,11 +15,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,63 +34,65 @@ public class AccountController {
     @PostMapping
     @Operation(summary = "Create a new account")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Account created successfully"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request data",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "201", description = "Account created successfully"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request data",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
     })
     public ResponseEntity<AccountResponseDto> createAccount(
-            @Valid @RequestBody AccountRequestDto dto) {
+        @Valid @RequestBody AccountRequestDto dto) {
 
         AccountResponseDto response = accountService.createAccount(dto);
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+            .status(HttpStatus.CREATED)
+            .body(response);
     }
 
     @GetMapping
     @Operation(summary = "Get all accounts")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Accounts retrieved successfully"),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "200", description = "Accounts retrieved successfully"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
     })
     public ResponseEntity<PageResponseDto<AccountResponseDto>> getAllAccounts(
-            @ParameterObject
-            @Parameter(description = "Pagination and sorting parameters")
-            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        @ParameterObject
+        @Parameter(description = "Pagination and sorting parameters")
+        @PageableDefault(size = 20, sort = "id") Pageable pageable) {
 
-        return ResponseEntity.ok(PageResponseDto.from(accountService.getAllAccounts(pageable)));
+        return ResponseEntity.ok(
+            PageResponseDto.from(accountService.getAllAccounts(pageable))
+        );
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get account by ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Account found"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Account not found with id: {id}",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "200", description = "Account found"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Account not found with id: {id}",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
     })
     public ResponseEntity<AccountResponseDto> getAccountById(
-            @PathVariable Long id) {
+        @PathVariable Long id) {
 
         return ResponseEntity.ok(accountService.getAccountById(id));
     }
@@ -98,24 +100,28 @@ public class AccountController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete account")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Account deleted successfully"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Account not found with id: {id}",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "204", description = "Account deleted successfully"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Account not found with id: {id}",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Cannot delete an account with a non-zero balance",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+        )
     })
     public ResponseEntity<Void> deleteAccount(
-            @PathVariable Long id) {
+        @PathVariable Long id) {
 
         accountService.deleteAccount(id);
 
         return ResponseEntity.noContent().build();
     }
-
 }

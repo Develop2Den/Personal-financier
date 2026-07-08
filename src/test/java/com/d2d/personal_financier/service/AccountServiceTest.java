@@ -9,6 +9,7 @@ import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.AccountType;
 import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.exception.AccountAlreadyExistsException;
+import com.d2d.personal_financier.exception.AccountHasBalanceException;
 import com.d2d.personal_financier.mapper.AccountMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
 import org.junit.jupiter.api.Test;
@@ -47,12 +48,13 @@ class AccountServiceTest {
     private AccountService accountService;
 
     @Test
-    void deleteAccountShouldArchiveWithoutPhysicalDelete() {
+    void deleteAccountShouldArchiveZeroBalanceAccountWithoutPhysicalDelete() {
         User user = User.builder().id(1L).build();
         Account account = new Account();
         account.setId(10L);
         account.setOwner(user);
         account.setActive(true);
+        account.setBalance(BigDecimal.ZERO);
 
         when(securityUtils.getCurrentUser()).thenReturn(user);
         when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(account));
@@ -61,6 +63,27 @@ class AccountServiceTest {
 
         assertEquals(false, account.getActive());
         verify(accountRepository).save(account);
+        verify(accountRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteAccountShouldRejectNonZeroBalanceAccount() {
+        User user = User.builder().id(1L).build();
+        Account account = new Account();
+        account.setId(10L);
+        account.setOwner(user);
+        account.setActive(true);
+        account.setBalance(new BigDecimal("100.00"));
+
+        when(securityUtils.getCurrentUser()).thenReturn(user);
+        when(accountRepository.findByIdAndOwnerIdAndActiveTrue(10L, 1L)).thenReturn(Optional.of(account));
+
+        AccountHasBalanceException exception =
+            assertThrows(AccountHasBalanceException.class, () -> accountService.deleteAccount(10L));
+
+        assertEquals("Account cannot be deleted because it has a non-zero balance.", exception.getMessage());
+        assertEquals(true, account.getActive());
+        verify(accountRepository, never()).save(any());
         verify(accountRepository, never()).delete(any());
     }
 

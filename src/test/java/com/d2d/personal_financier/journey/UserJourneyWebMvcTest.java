@@ -31,6 +31,7 @@ import com.d2d.personal_financier.entity.enums.AccountType;
 import com.d2d.personal_financier.entity.enums.BudgetPeriod;
 import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.TransactionType;
+import com.d2d.personal_financier.exception.AccountHasBalanceException;
 import com.d2d.personal_financier.exception.GlobalExceptionHandler;
 import com.d2d.personal_financier.exception.InvalidRefreshTokenException;
 import com.d2d.personal_financier.repository.UserRepository;
@@ -69,9 +70,11 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -463,6 +466,25 @@ class UserJourneyWebMvcTest {
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.message").value("Invalid request body"))
             .andExpect(jsonPath("$.path").value("/api/accounts"));
+    }
+
+    @Test
+    void deleteAccountShouldReturnNoContentForZeroBalanceAccount() throws Exception {
+        mockMvc.perform(delete("/api/accounts/10")
+                .with(user("denisdev")))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteAccountShouldReturnConflictForNonZeroBalanceAccount() throws Exception {
+        doThrow(new AccountHasBalanceException()).when(accountService).deleteAccount(10L);
+
+        mockMvc.perform(delete("/api/accounts/10")
+                .with(user("denisdev")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.status").value(409))
+            .andExpect(jsonPath("$.message").value("Account cannot be deleted because it has a non-zero balance."))
+            .andExpect(jsonPath("$.path").value("/api/accounts/10"));
     }
 
     @Test
