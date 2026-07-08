@@ -1,24 +1,33 @@
 package com.d2d.personal_financier.service;
 
+import com.d2d.personal_financier.dto.currency_dto.ExchangeRateDto;
 import com.d2d.personal_financier.entity.enums.Currency;
+import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
+import com.d2d.personal_financier.exception.ExchangeRateException;
 import com.d2d.personal_financier.provider.currency.ExchangeRateProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ExchangeRateService {
 
-    private final ExchangeRateProvider exchangeRateProvider;
+    private final List<ExchangeRateProvider> providers;
 
-    public BigDecimal getExchangeRate(Currency from, Currency to) {
+    public ExchangeRateDto getExchangeRate(
+        Currency fromCurrency,
+        Currency toCurrency,
+        ExchangeRateSource source) {
 
-        if (from == to) {
-            return BigDecimal.ONE;
-        }
+        ExchangeRateProvider provider = providers.stream()
+            .filter(p -> p.getSource() == source)
+            .findFirst()
+            .orElseThrow(() ->
+                new ExchangeRateException("Exchange rate provider not found: " + source));
 
-        return exchangeRateProvider.getExchangeRate(from, to);
+        return provider.getExchangeRate(fromCurrency, toCurrency);
     }
+
 }

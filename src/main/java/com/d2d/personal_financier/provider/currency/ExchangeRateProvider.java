@@ -1,11 +1,15 @@
 package com.d2d.personal_financier.provider.currency;
 
+import com.d2d.personal_financier.dto.currency_dto.ExchangeRateDto;
 import com.d2d.personal_financier.entity.enums.Currency;
-
-import java.math.BigDecimal;
+import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
 
 public interface ExchangeRateProvider {
 
-    BigDecimal getExchangeRate(Currency from, Currency to);
+    ExchangeRateSource getSource();
 
+    ExchangeRateDto getExchangeRate(
+        Currency fromCurrency,
+        Currency toCurrency
+    );
 }

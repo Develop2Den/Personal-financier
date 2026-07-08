@@ -12,11 +12,7 @@ import com.d2d.personal_financier.entity.Transaction;
 import com.d2d.personal_financier.entity.User;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.entity.enums.TransferDirection;
-import com.d2d.personal_financier.exception.AccountNotFoundException;
-import com.d2d.personal_financier.exception.CategoryNotFoundException;
-import com.d2d.personal_financier.exception.InvalidTransferException;
-import com.d2d.personal_financier.exception.InsufficientBalanceException;
-import com.d2d.personal_financier.exception.TransactionNotFoundException;
+import com.d2d.personal_financier.exception.*;
 import com.d2d.personal_financier.mapper.TransactionMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.repository.CategoryRepository;
@@ -45,13 +41,19 @@ public class TransactionService {
 
     public TransactionResponseDto createTransaction(TransactionRequestDto dto) {
 
+        if (dto.type() == TransactionType.TRANSFER) {
+            throw new InvalidTransferException(
+                "Transfers must be created using /api/transactions/transfer."
+            );
+        }
+
         User user = securityUtils.getCurrentUser();
 
         Account account = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.accountId(), user.getId())
-                .orElseThrow(() -> new AccountNotFoundException(dto.accountId()));
+            .orElseThrow(() -> new AccountNotFoundException(dto.accountId()));
 
         Category category = categoryRepository.findByIdAndOwnerIdAndActiveTrue(dto.categoryId(), user.getId())
-                .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
+            .orElseThrow(() -> new CategoryNotFoundException(dto.categoryId()));
 
         Transaction transaction = transactionMapper.toEntity(dto);
 
@@ -75,14 +77,14 @@ public class TransactionService {
             }
 
             account.setBalance(
-                    account.getBalance().subtract(transaction.getAmount())
+                account.getBalance().subtract(transaction.getAmount())
             );
         }
 
         if (transaction.getType() == TransactionType.INCOME) {
 
             account.setBalance(
-                    account.getBalance().add(transaction.getAmount())
+                account.getBalance().add(transaction.getAmount())
             );
         }
 
@@ -102,10 +104,10 @@ public class TransactionService {
         }
 
         Account fromAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.fromAccountId(), user.getId())
-                .orElseThrow(() -> new AccountNotFoundException(dto.fromAccountId()));
+            .orElseThrow(() -> new AccountNotFoundException(dto.fromAccountId()));
 
         Account toAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.toAccountId(), user.getId())
-                .orElseThrow(() -> new AccountNotFoundException(dto.toAccountId()));
+            .orElseThrow(() -> new AccountNotFoundException(dto.toAccountId()));
 
         if (fromAccount.getCurrency() != toAccount.getCurrency()) {
             throw new InvalidTransferException("Transfer between accounts with different currencies is not supported");
@@ -123,23 +125,23 @@ public class TransactionService {
         toAccount.setBalance(toAccount.getBalance().add(dto.amount()));
 
         Transaction outgoingTransaction = buildTransferTransaction(
-                dto.amount(),
-                sanitizedDescription,
-                transferDate,
-                user,
-                fromAccount,
-                transferReference,
-                TransferDirection.OUTGOING
+            dto.amount(),
+            sanitizedDescription,
+            transferDate,
+            user,
+            fromAccount,
+            transferReference,
+            TransferDirection.OUTGOING
         );
 
         Transaction incomingTransaction = buildTransferTransaction(
-                dto.amount(),
-                sanitizedDescription,
-                transferDate,
-                user,
-                toAccount,
-                transferReference,
-                TransferDirection.INCOMING
+            dto.amount(),
+            sanitizedDescription,
+            transferDate,
+            user,
+            toAccount,
+            transferReference,
+            TransferDirection.INCOMING
         );
 
         accountRepository.save(fromAccount);
@@ -148,17 +150,17 @@ public class TransactionService {
         transactionRepository.save(incomingTransaction);
 
         return new TransferResponseDto(
-                transferReference,
-                dto.amount(),
-                fromAccount.getCurrency(),
-                sanitizedDescription,
-                transferDate,
-                fromAccount.getId(),
-                toAccount.getId(),
-                outgoingTransaction.getId(),
-                incomingTransaction.getId(),
-                fromAccount.getBalance(),
-                toAccount.getBalance()
+            transferReference,
+            dto.amount(),
+            fromAccount.getCurrency(),
+            sanitizedDescription,
+            transferDate,
+            fromAccount.getId(),
+            toAccount.getId(),
+            outgoingTransaction.getId(),
+            incomingTransaction.getId(),
+            fromAccount.getBalance(),
+            toAccount.getBalance()
         );
     }
 
@@ -166,14 +168,14 @@ public class TransactionService {
         User user = securityUtils.getCurrentUser();
 
         return transactionRepository.findByOwnerId(user.getId(), pageable)
-                .map(transactionMapper::toDto);
+            .map(transactionMapper::toDto);
     }
 
     public TransactionResponseDto getTransactionById(Long id) {
         User user = securityUtils.getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new TransactionNotFoundException(id));
+            .orElseThrow(() -> new TransactionNotFoundException(id));
 
         return transactionMapper.toDto(transaction);
     }
@@ -182,7 +184,7 @@ public class TransactionService {
         User user = securityUtils.getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new TransactionNotFoundException(id));
+            .orElseThrow(() -> new TransactionNotFoundException(id));
 
         if (transaction.getType() == TransactionType.TRANSFER && transaction.getTransferReference() != null) {
             deleteTransferTransactions(transaction.getTransferReference(), user.getId());
@@ -195,36 +197,36 @@ public class TransactionService {
     }
 
     private Transaction buildTransferTransaction(
-            java.math.BigDecimal amount,
-            String description,
-            LocalDateTime transferDate,
-            User user,
-            Account account,
-            String transferReference,
-            TransferDirection transferDirection) {
+        java.math.BigDecimal amount,
+        String description,
+        LocalDateTime transferDate,
+        User user,
+        Account account,
+        String transferReference,
+        TransferDirection transferDirection) {
 
         return Transaction.builder()
-                .amount(amount)
-                .description(description)
-                .date(transferDate)
-                .type(TransactionType.TRANSFER)
-                .owner(user)
-                .account(account)
-                .category(null)
-                .transferReference(transferReference)
-                .transferDirection(transferDirection)
-                .build();
+            .amount(amount)
+            .description(description)
+            .date(transferDate)
+            .type(TransactionType.TRANSFER)
+            .owner(user)
+            .account(account)
+            .category(null)
+            .transferReference(transferReference)
+            .transferDirection(transferDirection)
+            .build();
     }
 
     private void deleteTransferTransactions(String transferReference, Long userId) {
         List<Transaction> transferTransactions =
-                transactionRepository.findByTransferReferenceAndOwnerId(transferReference, userId);
+            transactionRepository.findByTransferReferenceAndOwnerId(transferReference, userId);
 
         transferTransactions.forEach(this::rollbackTransactionImpact);
         transferTransactions.stream()
-                .map(Transaction::getAccount)
-                .distinct()
-                .forEach(accountRepository::save);
+            .map(Transaction::getAccount)
+            .distinct()
+            .forEach(accountRepository::save);
         transactionRepository.deleteAll(transferTransactions);
     }
 
