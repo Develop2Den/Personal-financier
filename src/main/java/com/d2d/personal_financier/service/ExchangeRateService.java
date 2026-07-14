@@ -15,19 +15,57 @@ import java.util.List;
 public class ExchangeRateService {
 
     private final List<ExchangeRateProvider> providers;
+    private final ExchangeRateCacheService cacheService;
 
-    public ExchangeRateDto getExchangeRate(
-        Currency fromCurrency,
-        Currency toCurrency,
+    public List<ExchangeRateDto> getExchangeRates(
         ExchangeRateSource source) {
 
-        ExchangeRateProvider provider = providers.stream()
-            .filter(p -> p.getSource() == source)
-            .findFirst()
-            .orElseThrow(() ->
-                new ExchangeRateException("Exchange rate provider not found: " + source));
+        List<ExchangeRateDto> cachedRates = cacheService.getRates(source);
 
-        return provider.getExchangeRate(fromCurrency, toCurrency);
+        if (!cachedRates.isEmpty()) {
+            return cachedRates;
+        }
+
+        ExchangeRateProvider provider = getProvider(source);
+
+        List<ExchangeRateDto> rates = provider.getExchangeRates();
+
+        cacheService.saveRates(
+            source,
+            rates,
+            provider.getCacheTtl()
+        );
+
+        return rates;
     }
 
+    public ExchangeRateDto getExchangeRate(
+        ExchangeRateSource source,
+        Currency fromCurrency,
+        Currency toCurrency) {
+
+        return getExchangeRates(source).stream()
+            .filter(rate ->
+                rate.fromCurrency() == fromCurrency
+                    && rate.toCurrency() == toCurrency)
+            .findFirst()
+            .orElseThrow(() ->
+                new ExchangeRateException(
+                    "Exchange rate not found: "
+                        + fromCurrency
+                        + " -> "
+                        + toCurrency
+                        + " (" + source + ")"));
+    }
+
+    private ExchangeRateProvider getProvider(
+        ExchangeRateSource source) {
+
+        return providers.stream()
+            .filter(provider -> provider.getSource() == source)
+            .findFirst()
+            .orElseThrow(() ->
+                new ExchangeRateException(
+                    "Exchange rate provider not found: " + source));
+    }
 }

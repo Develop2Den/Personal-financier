@@ -14,4 +14,5 @@ public enum Currency {
     private final String code;
     private final String symbol;
     private final String description;
+
 }

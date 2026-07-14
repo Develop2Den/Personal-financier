@@ -5,5 +5,6 @@ public enum ExchangeRateSource {
     NBU,
     PRIVATBANK,
     MONOBANK,
-    CASH
+    CASH,
+    MOCK
 }

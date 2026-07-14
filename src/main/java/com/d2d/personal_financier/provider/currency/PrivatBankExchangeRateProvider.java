@@ -1,48 +1,48 @@
 package com.d2d.personal_financier.provider.currency;
 
 import com.d2d.personal_financier.dto.currency_dto.ExchangeRateDto;
-import com.d2d.personal_financier.dto.currency_dto.NbuExchangeRateResponseDto;
+import com.d2d.personal_financier.dto.currency_dto.PrivatBankExchangeRateResponseDto;
 import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class NbuExchangeRateProvider implements ExchangeRateProvider {
+public class PrivatBankExchangeRateProvider implements ExchangeRateProvider {
 
-    private static final String NBU_EXCHANGE_RATE_URL =
-        "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json";
+    private static final String PRIVATBANK_EXCHANGE_RATE_URL =
+        "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5";
 
     private final RestClient currencyRestClient;
 
     @Override
     public ExchangeRateSource getSource() {
-        return ExchangeRateSource.NBU;
+        return ExchangeRateSource.PRIVATBANK;
     }
 
     @Override
     public Duration getCacheTtl() {
-        return Duration.ofHours(24);
+        return Duration.ofMinutes(5);
     }
 
     @Override
     public List<ExchangeRateDto> getExchangeRates() {
 
-        List<NbuExchangeRateResponseDto> rates = currencyRestClient
-            .get()
-            .uri(NBU_EXCHANGE_RATE_URL)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() {
-            });
+        List<PrivatBankExchangeRateResponseDto> rates =
+            currencyRestClient
+                .get()
+                .uri(PRIVATBANK_EXCHANGE_RATE_URL)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         if (rates == null) {
             return List.of();
@@ -54,25 +54,32 @@ public class NbuExchangeRateProvider implements ExchangeRateProvider {
             .toList();
     }
 
-    private ExchangeRateDto toExchangeRate(NbuExchangeRateResponseDto rate) {
+    private ExchangeRateDto toExchangeRate(
+        PrivatBankExchangeRateResponseDto rate) {
 
-        Currency currency = switch (rate.cc()) {
+        if (!"UAH".equals(rate.base_ccy())) {
+            return null;
+        }
+
+        Currency currency = switch (rate.ccy()) {
             case "USD" -> Currency.USD;
             case "EUR" -> Currency.EUR;
             default -> null;
         };
 
-        if (currency == null) {
+        if (currency == null
+            || rate.buy() == null
+            || rate.sale() == null) {
             return null;
         }
 
         return new ExchangeRateDto(
             currency,
             Currency.UAH,
-            rate.rate(),
-            rate.rate(),
-            ExchangeRateSource.NBU,
-            rate.exchangedate().atStartOfDay()
+            rate.buy(),
+            rate.sale(),
+            ExchangeRateSource.PRIVATBANK,
+            LocalDateTime.now()
         );
     }
 }
