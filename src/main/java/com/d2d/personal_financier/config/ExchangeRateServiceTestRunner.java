@@ -21,12 +21,12 @@ public class ExchangeRateServiceTestRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        exchangeRateCacheService.evictRates(ExchangeRateSource.PRIVATBANK);
+        exchangeRateCacheService.evictRates(ExchangeRateSource.MONOBANK);
 
         log.info("========== FIRST CALL ==========");
 
         ExchangeRateDto usd = exchangeRateService.getExchangeRate(
-            ExchangeRateSource.PRIVATBANK,
+            ExchangeRateSource.MONOBANK,
             Currency.USD,
             Currency.UAH
         );
@@ -36,9 +36,49 @@ public class ExchangeRateServiceTestRunner implements CommandLineRunner {
         log.info("========== SECOND CALL ==========");
 
         ExchangeRateDto usdCached = exchangeRateService.getExchangeRate(
-            ExchangeRateSource.PRIVATBANK,
+            ExchangeRateSource.MONOBANK,
             Currency.USD,
             Currency.UAH
+        );
+
+        log.info("========== USD -> UAH ==========");
+
+        log.info("{}",
+            exchangeRateService.getExchangeRate(
+                ExchangeRateSource.MONOBANK,
+                Currency.USD,
+                Currency.UAH
+            )
+        );
+
+        log.info("========== UAH -> USD ==========");
+
+        log.info("{}",
+            exchangeRateService.getExchangeRate(
+                ExchangeRateSource.MONOBANK,
+                Currency.UAH,
+                Currency.USD
+            )
+        );
+
+        log.info("========== EUR -> UAH ==========");
+
+        log.info("{}",
+            exchangeRateService.getExchangeRate(
+                ExchangeRateSource.MONOBANK,
+                Currency.EUR,
+                Currency.UAH
+            )
+        );
+
+        log.info("========== UAH -> EUR ==========");
+
+        log.info("{}",
+            exchangeRateService.getExchangeRate(
+                ExchangeRateSource.MONOBANK,
+                Currency.UAH,
+                Currency.EUR
+            )
         );
 
         log.info("{}", usdCached);

@@ -18,7 +18,8 @@ public class ExchangeRateService {
     private final ExchangeRateCacheService cacheService;
 
     public List<ExchangeRateDto> getExchangeRates(
-        ExchangeRateSource source) {
+        ExchangeRateSource source
+    ) {
 
         List<ExchangeRateDto> cachedRates = cacheService.getRates(source);
 
@@ -42,30 +43,96 @@ public class ExchangeRateService {
     public ExchangeRateDto getExchangeRate(
         ExchangeRateSource source,
         Currency fromCurrency,
-        Currency toCurrency) {
+        Currency toCurrency
+    ) {
 
-        return getExchangeRates(source).stream()
+        List<ExchangeRateDto> rates = getExchangeRates(source);
+
+        ExchangeRateDto directRate = findDirectRate(
+            rates,
+            fromCurrency,
+            toCurrency
+        );
+
+        if (directRate != null) {
+            return directRate;
+        }
+
+        ExchangeRateDto reverseRate = findReverseRate(
+            rates,
+            fromCurrency,
+            toCurrency
+        );
+
+        if (reverseRate != null) {
+            return reverseRate;
+        }
+
+        throw new ExchangeRateException(
+            "Exchange rate not found: "
+                + fromCurrency
+                + " -> "
+                + toCurrency
+                + " (" + source + ")"
+        );
+    }
+
+    private ExchangeRateDto findDirectRate(
+        List<ExchangeRateDto> rates,
+        Currency fromCurrency,
+        Currency toCurrency
+    ) {
+
+        return rates.stream()
             .filter(rate ->
                 rate.fromCurrency() == fromCurrency
-                    && rate.toCurrency() == toCurrency)
+                    && rate.toCurrency() == toCurrency
+            )
             .findFirst()
-            .orElseThrow(() ->
-                new ExchangeRateException(
-                    "Exchange rate not found: "
-                        + fromCurrency
-                        + " -> "
-                        + toCurrency
-                        + " (" + source + ")"));
+            .orElse(null);
+    }
+
+    private ExchangeRateDto findReverseRate(
+        List<ExchangeRateDto> rates,
+        Currency fromCurrency,
+        Currency toCurrency
+    ) {
+
+        return rates.stream()
+            .filter(rate ->
+                rate.fromCurrency() == toCurrency
+                    && rate.toCurrency() == fromCurrency
+            )
+            .findFirst()
+            .map(this::reverse)
+            .orElse(null);
+    }
+
+    private ExchangeRateDto reverse(
+        ExchangeRateDto rate
+    ) {
+
+        return new ExchangeRateDto(
+            rate.toCurrency(),
+            rate.fromCurrency(),
+            rate.buyRate(),
+            rate.sellRate(),
+            rate.source(),
+            rate.updatedAt()
+        );
     }
 
     private ExchangeRateProvider getProvider(
-        ExchangeRateSource source) {
+        ExchangeRateSource source
+    ) {
 
         return providers.stream()
             .filter(provider -> provider.getSource() == source)
             .findFirst()
             .orElseThrow(() ->
                 new ExchangeRateException(
-                    "Exchange rate provider not found: " + source));
+                    "Exchange rate provider not found: " + source
+                )
+            );
     }
 }

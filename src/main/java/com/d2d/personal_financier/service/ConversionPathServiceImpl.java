@@ -1,9 +1,9 @@
 package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.entity.enums.Currency;
-import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
 import com.d2d.personal_financier.model.ExchangePath;
 import com.d2d.personal_financier.model.ExchangeStep;
+import com.d2d.personal_financier.service.interfaces.ConversionPathService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,6 @@ public class ConversionPathServiceImpl implements ConversionPathService {
 
     @Override
     public ExchangePath getPath(
-        ExchangeRateSource source,
         Currency fromCurrency,
         Currency toCurrency
     ) {

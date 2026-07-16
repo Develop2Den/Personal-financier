@@ -1,6 +1,7 @@
 package com.d2d.personal_financier.dto.currency_dto;
 
 import com.d2d.personal_financier.entity.enums.Currency;
+import com.d2d.personal_financier.entity.enums.ExchangeOperation;
 import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
 
 import java.math.BigDecimal;
@@ -13,6 +14,8 @@ public record CurrencyConversionStepDto(
     Currency toCurrency,
 
     BigDecimal appliedRate,
+
+    ExchangeOperation operation,
 
     ExchangeRateSource source,
 
