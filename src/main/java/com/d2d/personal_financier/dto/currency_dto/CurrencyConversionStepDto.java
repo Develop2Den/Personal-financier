@@ -15,6 +15,10 @@ public record CurrencyConversionStepDto(
 
     BigDecimal appliedRate,
 
+    BigDecimal sourceAmount,
+
+    BigDecimal targetAmount,
+
     ExchangeOperation operation,
 
     ExchangeRateSource source,
