@@ -8,13 +8,7 @@ import com.d2d.personal_financier.config.security.jwt.JwtProvider;
 import com.d2d.personal_financier.config.security.utils.JwtBlacklistService;
 import com.d2d.personal_financier.config.security.utils.RateLimitFilter;
 import com.d2d.personal_financier.config.security.utils.SecurityErrorResponseWriter;
-import com.d2d.personal_financier.controller.AccountController;
-import com.d2d.personal_financier.controller.AnalyticsController;
-import com.d2d.personal_financier.controller.AuthController;
-import com.d2d.personal_financier.controller.BudgetController;
-import com.d2d.personal_financier.controller.CategoryController;
-import com.d2d.personal_financier.controller.GoalController;
-import com.d2d.personal_financier.controller.TransactionController;
+import com.d2d.personal_financier.controller.*;
 import com.d2d.personal_financier.dto.account_dto.AccountResponseDto;
 import com.d2d.personal_financier.dto.analytics.CategoryBreakdownDto;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
@@ -35,17 +29,7 @@ import com.d2d.personal_financier.exception.AccountHasBalanceException;
 import com.d2d.personal_financier.exception.GlobalExceptionHandler;
 import com.d2d.personal_financier.exception.InvalidRefreshTokenException;
 import com.d2d.personal_financier.repository.UserRepository;
-import com.d2d.personal_financier.service.AccountService;
-import com.d2d.personal_financier.service.AnalyticsService;
-import com.d2d.personal_financier.service.AuditService;
-import com.d2d.personal_financier.service.BudgetService;
-import com.d2d.personal_financier.service.CategoryService;
-import com.d2d.personal_financier.service.EmailVerificationService;
-import com.d2d.personal_financier.service.GoalService;
-import com.d2d.personal_financier.service.PasswordResetService;
-import com.d2d.personal_financier.service.RefreshTokenService;
-import com.d2d.personal_financier.service.TransactionService;
-import com.d2d.personal_financier.service.UserService;
+import com.d2d.personal_financier.service.*;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
@@ -55,28 +39,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -101,52 +81,52 @@ class UserJourneyWebMvcTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private EmailVerificationService emailVerificationService;
 
-    @MockBean
+    @MockitoBean
     private RefreshTokenService refreshTokenService;
 
-    @MockBean
+    @MockitoBean
     private PasswordResetService passwordResetService;
 
-    @MockBean
+    @MockitoBean
     private AuditService auditService;
 
-    @MockBean
+    @MockitoBean
     private AccountService accountService;
 
-    @MockBean
+    @MockitoBean
     private CategoryService categoryService;
 
-    @MockBean
+    @MockitoBean
     private TransactionService transactionService;
 
-    @MockBean
+    @MockitoBean
     private BudgetService budgetService;
 
-    @MockBean
+    @MockitoBean
     private GoalService goalService;
 
-    @MockBean
+    @MockitoBean
     private AnalyticsService analyticsService;
 
-    @MockBean
+    @MockitoBean
     private JwtBlacklistService jwtBlacklistService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
-    @MockBean
+    @MockitoBean
     private JwtProvider jwtProvider;
 
-    @MockBean
+    @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
 
-    @MockBean
+    @MockitoBean
     private RateLimitFilter rateLimitFilter;
 
     @BeforeEach
@@ -175,7 +155,13 @@ class UserJourneyWebMvcTest {
         String accessToken = "access-token";
         String refreshToken = "refresh-token";
         String resetToken = "reset-token";
-        LocalDateTime now = LocalDateTime.of(2026, 4, 23, 10, 0);
+        LocalDateTime now = LocalDateTime.of(
+            2026,
+            Month.APRIL,
+            23,
+            10,
+            0
+        );
 
         User userEntity = User.builder()
             .id(1L)
@@ -223,11 +209,23 @@ class UserJourneyWebMvcTest {
         );
 
         when(budgetService.createBudget(any())).thenReturn(
-            new BudgetResponseDto(40L, 20L, new BigDecimal("600.00"), LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 30), BudgetPeriod.MONTHLY)
+            new BudgetResponseDto(40L, 20L, new BigDecimal("600.00"), LocalDate.of(
+                2026,
+                Month.APRIL,
+                1
+            ), LocalDate.of(
+                2026,
+                Month.APRIL,
+                1
+            ), BudgetPeriod.MONTHLY)
         );
 
         when(goalService.createGoal(any())).thenReturn(
-            new GoalResponseDto(50L, "Emergency fund", new BigDecimal("5000.00"), new BigDecimal("0.00"), 0, LocalDate.of(2026, 12, 31))
+            new GoalResponseDto(50L, "Emergency fund", new BigDecimal("5000.00"), new BigDecimal("0.00"), 0, LocalDate.of(
+                2026,
+                Month.APRIL,
+                1
+            ))
         );
 
         when(analyticsService.getMonthlyCashflow()).thenReturn(List.of(
@@ -514,7 +512,13 @@ class UserJourneyWebMvcTest {
                     new BigDecimal("50.00"),
                     TransactionType.EXPENSE,
                     "Groceries",
-                    LocalDateTime.of(2026, 4, 23, 10, 0),
+                    LocalDateTime.of(
+                        2026,
+                        Month.APRIL,
+                        23,
+                        10,
+                        0
+                    ),
                     10L,
                     20L
                 )),
@@ -565,7 +569,13 @@ class UserJourneyWebMvcTest {
                 new BigDecimal("150.00"),
                 Currency.USD,
                 "Card to cash",
-                LocalDateTime.of(2026, 4, 27, 11, 0),
+                LocalDateTime.of(
+                    2026,
+                    Month.APRIL,
+                    23,
+                    10,
+                    0
+                ),
                 10L,
                 11L,
                 101L,

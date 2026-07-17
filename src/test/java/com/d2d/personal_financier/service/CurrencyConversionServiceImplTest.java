@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +34,13 @@ import static org.mockito.Mockito.*;
 class CurrencyConversionServiceImplTest {
 
     private static final LocalDateTime UPDATED_AT =
-        LocalDateTime.of(2026, 7, 16, 12, 0);
+        LocalDateTime.of(
+            2026,
+            Month.JULY,
+            10,
+            12,
+            0
+        );
     private Validator validator;
 
     @Mock

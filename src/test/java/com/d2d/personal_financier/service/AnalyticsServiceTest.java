@@ -5,11 +5,7 @@ import com.d2d.personal_financier.dto.analytics.CategoryBreakdownDto;
 import com.d2d.personal_financier.dto.analytics.DashboardDto;
 import com.d2d.personal_financier.dto.analytics.MonthlyCashflowDto;
 import com.d2d.personal_financier.dto.analytics.MonthlyExpenseDto;
-import com.d2d.personal_financier.entity.Account;
-import com.d2d.personal_financier.entity.Category;
-import com.d2d.personal_financier.entity.Goal;
-import com.d2d.personal_financier.entity.Transaction;
-import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.entity.*;
 import com.d2d.personal_financier.entity.enums.Currency;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.repository.AccountRepository;
@@ -23,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -93,8 +90,8 @@ class AnalyticsServiceTest {
         List<CategoryBreakdownDto> result = analyticsService.getTopCategories("2026-04");
 
         assertEquals(2, result.size());
-        assertEquals("Food", result.get(0).category());
-        assertEquals(new BigDecimal("30.00"), result.get(0).amount());
+        assertEquals("Food", result.getFirst().category());
+        assertEquals(new BigDecimal("30.00"), result.getFirst().amount());
         assertEquals(new BigDecimal("60.00"), result.get(0).percentage());
         assertEquals(1L, result.get(0).transactionCount());
         assertEquals("Transport", result.get(1).category());
@@ -139,21 +136,39 @@ class AnalyticsServiceTest {
                 .owner(user)
                 .type(TransactionType.EXPENSE)
                 .amount(new BigDecimal("30.00"))
-                .date(LocalDateTime.of(2026, 4, 10, 12, 0))
+                .date(LocalDateTime.of(
+                    2026,
+                    Month.APRIL,
+                    10,
+                    12,
+                    0
+                ))
                 .category(food)
                 .build(),
             Transaction.builder()
                 .owner(user)
                 .type(TransactionType.EXPENSE)
                 .amount(new BigDecimal("20.00"))
-                .date(LocalDateTime.of(2026, 4, 12, 12, 0))
+                .date(LocalDateTime.of(
+                    2026,
+                    Month.APRIL,
+                    10,
+                    12,
+                    0
+                ))
                 .category(transport)
                 .build(),
             Transaction.builder()
                 .owner(user)
                 .type(TransactionType.INCOME)
                 .amount(new BigDecimal("100.00"))
-                .date(LocalDateTime.of(2026, 4, 15, 12, 0))
+                .date(LocalDateTime.of(
+                    2026,
+                    Month.APRIL,
+                    10,
+                    12,
+                    0
+                ))
                 .category(null)
                 .build()
         );

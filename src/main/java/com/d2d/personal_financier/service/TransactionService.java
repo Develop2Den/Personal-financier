@@ -2,6 +2,8 @@ package com.d2d.personal_financier.service;
 
 import com.d2d.personal_financier.config.security.utils.HtmlSanitizerService;
 import com.d2d.personal_financier.config.security.utils.SecurityUtils;
+import com.d2d.personal_financier.dto.currency_dto.CurrencyConversionRequestDto;
+import com.d2d.personal_financier.dto.currency_dto.CurrencyConversionResponseDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransactionRequestDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransactionResponseDto;
 import com.d2d.personal_financier.dto.transaction_dto.TransferRequestDto;
@@ -10,6 +12,7 @@ import com.d2d.personal_financier.entity.Account;
 import com.d2d.personal_financier.entity.Category;
 import com.d2d.personal_financier.entity.Transaction;
 import com.d2d.personal_financier.entity.User;
+import com.d2d.personal_financier.entity.enums.ExchangeRateSource;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import com.d2d.personal_financier.entity.enums.TransferDirection;
 import com.d2d.personal_financier.exception.*;
@@ -17,12 +20,15 @@ import com.d2d.personal_financier.mapper.TransactionMapper;
 import com.d2d.personal_financier.repository.AccountRepository;
 import com.d2d.personal_financier.repository.CategoryRepository;
 import com.d2d.personal_financier.repository.TransactionRepository;
+import com.d2d.personal_financier.service.interfaces.CurrencyConversionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +44,39 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final SecurityUtils securityUtils;
+    private final CurrencyConversionService currencyConversionService;
+
+    @Value("${app.currency.exchange-rate-source}")
+    private ExchangeRateSource exchangeRateSource;
+
+    private record TransferContext(
+
+        String transferReference,
+
+        String sanitizedDescription,
+
+        LocalDateTime transferDate
+
+    ) {
+    }
+
+    private record TransferTransactions(
+
+        Transaction outgoingTransaction,
+
+        Transaction incomingTransaction
+
+    ) {
+    }
+
+    private record TransferAmounts(
+
+        BigDecimal sourceAmount,
+
+        BigDecimal targetAmount
+
+    ) {
+    }
 
     public TransactionResponseDto createTransaction(TransactionRequestDto dto) {
 
@@ -99,68 +138,47 @@ public class TransactionService {
 
         User user = securityUtils.getCurrentUser();
 
-        if (dto.fromAccountId().equals(dto.toAccountId())) {
-            throw new InvalidTransferException("Source and destination accounts must be different");
-        }
+        validateDifferentAccounts(dto);
 
-        Account fromAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.fromAccountId(), user.getId())
-            .orElseThrow(() -> new AccountNotFoundException(dto.fromAccountId()));
+        Account fromAccount = findActiveAccount(dto.fromAccountId(), user);
+        Account toAccount = findActiveAccount(dto.toAccountId(), user);
 
-        Account toAccount = accountRepository.findByIdAndOwnerIdAndActiveTrue(dto.toAccountId(), user.getId())
-            .orElseThrow(() -> new AccountNotFoundException(dto.toAccountId()));
+        ensureBalanceAvailable(fromAccount, dto.amount());
 
-        if (fromAccount.getCurrency() != toAccount.getCurrency()) {
-            throw new InvalidTransferException("Transfer between accounts with different currencies is not supported");
-        }
+        TransferAmounts transferAmounts = resolveTransferAmounts(
+            dto,
+            fromAccount,
+            toAccount
+        );
 
-        if (fromAccount.getBalance().compareTo(dto.amount()) < 0) {
-            throw new InsufficientBalanceException(fromAccount.getId());
-        }
+        TransferContext transferContext = buildTransferContext(dto);
 
-        LocalDateTime transferDate = dto.date() == null ? LocalDateTime.now() : dto.date();
-        String transferReference = UUID.randomUUID().toString();
-        String sanitizedDescription = sanitizer.sanitize(dto.description());
+        applyTransferBalanceChanges(
+            fromAccount,
+            toAccount,
+            transferAmounts
+        );
 
-        fromAccount.setBalance(fromAccount.getBalance().subtract(dto.amount()));
-        toAccount.setBalance(toAccount.getBalance().add(dto.amount()));
-
-        Transaction outgoingTransaction = buildTransferTransaction(
-            dto.amount(),
-            sanitizedDescription,
-            transferDate,
+        TransferTransactions transferTransactions = buildTransferTransactions(
+            transferAmounts,
             user,
             fromAccount,
-            transferReference,
-            TransferDirection.OUTGOING
-        );
-
-        Transaction incomingTransaction = buildTransferTransaction(
-            dto.amount(),
-            sanitizedDescription,
-            transferDate,
-            user,
             toAccount,
-            transferReference,
-            TransferDirection.INCOMING
+            transferContext
         );
 
-        accountRepository.save(fromAccount);
-        accountRepository.save(toAccount);
-        transactionRepository.save(outgoingTransaction);
-        transactionRepository.save(incomingTransaction);
+        saveTransfer(
+            fromAccount,
+            toAccount,
+            transferTransactions
+        );
 
-        return new TransferResponseDto(
-            transferReference,
-            dto.amount(),
-            fromAccount.getCurrency(),
-            sanitizedDescription,
-            transferDate,
-            fromAccount.getId(),
-            toAccount.getId(),
-            outgoingTransaction.getId(),
-            incomingTransaction.getId(),
-            fromAccount.getBalance(),
-            toAccount.getBalance()
+        return buildTransferResponse(
+            dto,
+            fromAccount,
+            toAccount,
+            transferContext,
+            transferTransactions
         );
     }
 
@@ -196,24 +214,143 @@ public class TransactionService {
         transactionRepository.delete(transaction);
     }
 
+    private void validateDifferentAccounts(TransferRequestDto dto) {
+        if (dto.fromAccountId().equals(dto.toAccountId())) {
+            throw new InvalidTransferException("Source and destination accounts must be different");
+        }
+    }
+
+    private Account findActiveAccount(Long accountId, User user) {
+        return accountRepository.findByIdAndOwnerIdAndActiveTrue(accountId, user.getId())
+            .orElseThrow(() -> new AccountNotFoundException(accountId));
+    }
+
+    private LocalDateTime resolveTransferDate(TransferRequestDto dto) {
+        return dto.date() == null ? LocalDateTime.now() : dto.date();
+    }
+
+    private TransferContext buildTransferContext(TransferRequestDto dto) {
+        return new TransferContext(
+            UUID.randomUUID().toString(),
+            sanitizer.sanitize(dto.description()),
+            resolveTransferDate(dto)
+        );
+    }
+
+    private void applyTransferBalanceChanges(
+        Account fromAccount,
+        Account toAccount,
+        TransferAmounts transferAmounts
+    ) {
+        fromAccount.setBalance(fromAccount.getBalance().subtract(transferAmounts.sourceAmount()));
+        toAccount.setBalance(toAccount.getBalance().add(transferAmounts.targetAmount()));
+    }
+
+    private void saveTransfer(
+        Account fromAccount,
+        Account toAccount,
+        TransferTransactions transferTransactions
+    ) {
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+        transactionRepository.save(transferTransactions.outgoingTransaction());
+        transactionRepository.save(transferTransactions.incomingTransaction());
+    }
+
+    private TransferResponseDto buildTransferResponse(
+        TransferRequestDto dto,
+        Account fromAccount,
+        Account toAccount,
+        TransferContext transferContext,
+        TransferTransactions transferTransactions
+    ) {
+        return new TransferResponseDto(
+            transferContext.transferReference(),
+            dto.amount(),
+            fromAccount.getCurrency(),
+            transferContext.sanitizedDescription(),
+            transferContext.transferDate(),
+            fromAccount.getId(),
+            toAccount.getId(),
+            transferTransactions.outgoingTransaction().getId(),
+            transferTransactions.incomingTransaction().getId(),
+            fromAccount.getBalance(),
+            toAccount.getBalance()
+        );
+    }
+
+    private TransferTransactions buildTransferTransactions(
+        TransferAmounts transferAmounts,
+        User user,
+        Account fromAccount,
+        Account toAccount,
+        TransferContext transferContext
+    ) {
+        Transaction outgoingTransaction = buildTransferTransaction(
+            transferAmounts.sourceAmount(),
+            user,
+            fromAccount,
+            transferContext,
+            TransferDirection.OUTGOING
+        );
+
+        Transaction incomingTransaction = buildTransferTransaction(
+            transferAmounts.targetAmount(),
+            user,
+            toAccount,
+            transferContext,
+            TransferDirection.INCOMING
+        );
+
+        return new TransferTransactions(
+            outgoingTransaction,
+            incomingTransaction
+        );
+    }
+
+    private TransferAmounts resolveTransferAmounts(
+        TransferRequestDto dto,
+        Account fromAccount,
+        Account toAccount
+    ) {
+        if (fromAccount.getCurrency() == toAccount.getCurrency()) {
+            return new TransferAmounts(
+                dto.amount(),
+                dto.amount()
+            );
+        }
+
+        CurrencyConversionResponseDto conversion = currencyConversionService.convert(
+            new CurrencyConversionRequestDto(
+                dto.amount(),
+                fromAccount.getCurrency(),
+                toAccount.getCurrency(),
+                exchangeRateSource
+            )
+        );
+
+        return new TransferAmounts(
+            dto.amount(),
+            conversion.targetAmount()
+        );
+    }
+
     private Transaction buildTransferTransaction(
-        java.math.BigDecimal amount,
-        String description,
-        LocalDateTime transferDate,
+        BigDecimal amount,
         User user,
         Account account,
-        String transferReference,
+        TransferContext transferContext,
         TransferDirection transferDirection) {
 
         return Transaction.builder()
             .amount(amount)
-            .description(description)
-            .date(transferDate)
+            .description(transferContext.sanitizedDescription())
+            .date(transferContext.transferDate())
             .type(TransactionType.TRANSFER)
             .owner(user)
             .account(account)
             .category(null)
-            .transferReference(transferReference)
+            .transferReference(transferContext.transferReference())
             .transferDirection(transferDirection)
             .build();
     }
@@ -258,11 +395,9 @@ public class TransactionService {
         throw new InvalidTransferException("Transfer transaction is missing direction metadata");
     }
 
-    private void ensureBalanceAvailable(Account account, java.math.BigDecimal amount) {
+    private void ensureBalanceAvailable(Account account, BigDecimal amount) {
         if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientBalanceException(account.getId());
         }
     }
 }
-
-

@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 @Service
 public class PromptBuilderService {
 
+    private static final String SECTION_SEPARATOR =
+        "\n------------------\n";
+
     private static final String DASHBOARD_TEMPLATE = """
         Monthly Income: %s
         Monthly Expenses: %s
@@ -136,7 +139,7 @@ public class PromptBuilderService {
                 account.balance(),
                 account.currency()
             ))
-            .collect(Collectors.joining("\n------------------\n"));
+            .collect(Collectors.joining(SECTION_SEPARATOR));
 
         String goals = context.goals()
             .stream()
@@ -147,7 +150,7 @@ public class PromptBuilderService {
                 goal.deadline(),
                 goal.status()
             ))
-            .collect(Collectors.joining("\n------------------\n"));
+            .collect(Collectors.joining(SECTION_SEPARATOR));
 
         String transactions = context.transactions()
             .stream()
@@ -161,7 +164,7 @@ public class PromptBuilderService {
                 transaction.description(),
                 transaction.transferDirection()
             ))
-            .collect(Collectors.joining("\n------------------\n"));
+            .collect(Collectors.joining(SECTION_SEPARATOR));
 
         String categories = context.categories()
             .stream()
@@ -170,7 +173,7 @@ public class PromptBuilderService {
                 category.type(),
                 category.active()
             ))
-            .collect(Collectors.joining("\n------------------\n"));
+            .collect(Collectors.joining(SECTION_SEPARATOR));
 
         return SYSTEM_RULES + """
 
