@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 
 @Service
-public class PromptBuilderService {
+public class FinancialContextPromptBuilderService {
 
     private static final String SECTION_SEPARATOR =
         "\n------------------\n";

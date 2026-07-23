@@ -1,8 +1,8 @@
 package com.d2d.personal_financier.ai.service;
 
-import com.d2d.personal_financier.ai.dto.FinancialContextDto;
-import com.d2d.personal_financier.provider.ai.AiProvider;
-import com.d2d.personal_financier.provider.ai.AiProviderFactory;
+import com.d2d.personal_financier.ai.agent.AiAgentService;
+import com.d2d.personal_financier.ai.agent.analytics.model.AiRequest;
+import com.d2d.personal_financier.ai.agent.analytics.model.AiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,19 +10,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
 
-    private final AiProviderFactory aiProviderFactory;
-    private final FinancialContextService financialContextService;
-    private final PromptBuilderService promptBuilderService;
+    private final AiAgentService aiAgentService;
 
     @Override
     public String ask(String question) {
 
-        FinancialContextDto context = financialContextService.buildContext();
+        AiResponse response =
+            aiAgentService.execute(
+                new AiRequest(question)
+            );
 
-        String prompt = promptBuilderService.buildPrompt(context, question);
-
-        AiProvider provider = aiProviderFactory.getProvider();
-
-        return provider.ask(prompt);
+        return response.content();
     }
 }

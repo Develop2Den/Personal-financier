@@ -55,7 +55,9 @@ public class RefreshTokenService {
 
     public AuthResponseDto refresh(String refreshTokenValue) {
 
-        RefreshToken currentToken = refreshTokenRepository.findByTokenHash(hashToken(refreshTokenValue))
+        String tokenHash = hashToken(refreshTokenValue);
+
+        RefreshToken currentToken = refreshTokenRepository.findByTokenHash(tokenHash)
             .orElseThrow(() -> {
                 auditService.log(TOKEN_REFRESH, FAILED, null, null, "Unknown refresh token");
                 return new InvalidRefreshTokenException();
@@ -72,8 +74,20 @@ public class RefreshTokenService {
             throw new RefreshTokenExpiredException();
         }
 
-        currentToken.setRevokedAt(LocalDateTime.now());
-        currentToken.setLastUsedAt(LocalDateTime.now());
+        LocalDateTime usedAt = LocalDateTime.now();
+        int consumedTokens = refreshTokenRepository.revokeIfNotRevoked(
+            tokenHash,
+            usedAt,
+            usedAt
+        );
+
+        if (consumedTokens != 1) {
+            auditService.log(TOKEN_REFRESH, FAILED, currentToken.getOwner(), currentToken.getOwner().getUsername(), "Revoked refresh token reuse");
+            throw new InvalidRefreshTokenException();
+        }
+
+        currentToken.setRevokedAt(usedAt);
+        currentToken.setLastUsedAt(usedAt);
 
         User user = currentToken.getOwner();
         ensureUserActive(user);

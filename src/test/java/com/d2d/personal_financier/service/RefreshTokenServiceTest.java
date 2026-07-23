@@ -59,6 +59,8 @@ class RefreshTokenServiceTest {
             .build();
 
         when(refreshTokenRepository.findByTokenHash(hashToken("old-refresh-token"))).thenReturn(Optional.of(currentToken));
+        when(refreshTokenRepository.revokeIfNotRevoked(eq(hashToken("old-refresh-token")), any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(1);
         when(jwtProvider.generateAccessToken(user)).thenReturn("new-access-token");
 
         AuthResponseDto response = refreshTokenService.refresh("old-refresh-token");
@@ -89,7 +91,34 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByTokenHash(hashToken("revoked-token"))).thenReturn(Optional.of(revokedToken));
 
         assertThrows(InvalidRefreshTokenException.class, () -> refreshTokenService.refresh("revoked-token"));
+        verify(refreshTokenRepository, never()).revokeIfNotRevoked(anyString(), any(LocalDateTime.class), any(LocalDateTime.class));
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    @Test
+    void refreshShouldRejectTokenConsumedConcurrently() {
+        User user = User.builder()
+            .id(1L)
+            .username("denisdev")
+            .build();
+
+        RefreshToken currentToken = RefreshToken.builder()
+            .tokenHash(hashToken("racing-token"))
+            .owner(user)
+            .expiryDate(LocalDateTime.now().plusMinutes(10))
+            .build();
+
+        when(refreshTokenRepository.findByTokenHash(hashToken("racing-token"))).thenReturn(Optional.of(currentToken));
+        when(refreshTokenRepository.revokeIfNotRevoked(eq(hashToken("racing-token")), any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(0);
+
+        assertThrows(InvalidRefreshTokenException.class, () -> refreshTokenService.refresh("racing-token"));
+
+        assertNull(currentToken.getRevokedAt());
+        assertNull(currentToken.getLastUsedAt());
+        verify(jwtProvider, never()).generateAccessToken(any(User.class));
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+        verify(auditService).log("TOKEN_REFRESH", "FAILED", user, user.getUsername(), "Revoked refresh token reuse");
     }
 
     private String hashToken(String token) {
