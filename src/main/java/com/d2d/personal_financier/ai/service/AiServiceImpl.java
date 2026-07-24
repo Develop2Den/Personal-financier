@@ -1,8 +1,8 @@
 package com.d2d.personal_financier.ai.service;
 
 import com.d2d.personal_financier.ai.agent.AiAgentService;
-import com.d2d.personal_financier.ai.agent.analytics.model.AiRequest;
-import com.d2d.personal_financier.ai.agent.analytics.model.AiResponse;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiRequest;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

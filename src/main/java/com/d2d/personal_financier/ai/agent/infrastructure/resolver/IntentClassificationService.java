@@ -1,9 +1,9 @@
 package com.d2d.personal_financier.ai.agent.infrastructure.resolver;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AiRequest;
-import com.d2d.personal_financier.ai.agent.analytics.model.AiResponse;
-import com.d2d.personal_financier.ai.agent.analytics.model.IntentClassificationResult;
-import com.d2d.personal_financier.ai.agent.analytics.model.ResolvedIntent;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiRequest;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiResponse;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.IntentClassificationResult;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.ResolvedIntent;
 import com.d2d.personal_financier.ai.agent.classification.IntentPromptBuilderService;
 import com.d2d.personal_financier.ai.agent.infrastructure.model.AgentParameters;
 import com.d2d.personal_financier.ai.parser.AiJsonParser;

@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.ai.agent.infrastructure.registry;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AiIntent;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiIntent;
 import com.d2d.personal_financier.ai.agent.infrastructure.executor.AiAgent;
 import org.springframework.stereotype.Component;
 

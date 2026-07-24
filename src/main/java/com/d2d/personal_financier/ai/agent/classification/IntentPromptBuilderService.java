@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.ai.agent.classification;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AiRequest;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiRequest;
 import org.springframework.stereotype.Service;
 
 @Service

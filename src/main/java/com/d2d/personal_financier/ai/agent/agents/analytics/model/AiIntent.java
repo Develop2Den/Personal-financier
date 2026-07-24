@@ -1,4 +1,4 @@
-package com.d2d.personal_financier.ai.agent.analytics.model;
+package com.d2d.personal_financier.ai.agent.agents.analytics.model;
 
 public enum AiIntent {
 
@@ -9,7 +9,5 @@ public enum AiIntent {
     BUDGET,
     ANALYTICS,
     CURRENCY,
-    DASHBOARD,
     SYSTEM
-
 }

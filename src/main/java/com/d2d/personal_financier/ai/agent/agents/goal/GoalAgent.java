@@ -1,34 +1,37 @@
-package com.d2d.personal_financier.ai.agent.analytics;
+package com.d2d.personal_financier.ai.agent.agents.goal;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AgentExecution;
-import com.d2d.personal_financier.ai.agent.analytics.model.AiIntent;
-import com.d2d.personal_financier.ai.agent.analytics.model.ResolvedIntent;
-import com.d2d.personal_financier.ai.agent.analytics.prompt.AnalyticsPromptBuilderService;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AgentExecution;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiIntent;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.ResolvedIntent;
+import com.d2d.personal_financier.ai.agent.agents.goal.prompt.GoalPromptBuilderService;
 import com.d2d.personal_financier.ai.agent.infrastructure.executor.AiAgent;
 import com.d2d.personal_financier.ai.dto.FinancialContextDto;
 import com.d2d.personal_financier.ai.service.FinancialContextService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class AnalyticsAgent implements AiAgent {
+public class GoalAgent implements AiAgent {
+
+    private static final Logger log =
+        LoggerFactory.getLogger(GoalAgent.class);
 
     private final FinancialContextService financialContextService;
-    private final AnalyticsPromptBuilderService analyticsPromptBuilderService;
+    private final GoalPromptBuilderService goalPromptBuilderService;
 
     @Override
     public AiIntent supportedIntent() {
-        return AiIntent.ANALYTICS;
+        return AiIntent.GOAL;
     }
 
     @Override
     public AgentExecution execute(ResolvedIntent resolvedIntent) {
 
         log.info(
-            "AnalyticsAgent executed. Action: {}",
+            "GoalAgent executed. Action: {}",
             resolvedIntent.action()
         );
 
@@ -36,9 +39,9 @@ public class AnalyticsAgent implements AiAgent {
             financialContextService.buildContext();
 
         String prompt =
-            analyticsPromptBuilderService.buildPrompt(
+            goalPromptBuilderService.buildPrompt(
                 context,
-                resolvedIntent
+                resolvedIntent.userMessage()
             );
 
         return new AgentExecution(prompt);

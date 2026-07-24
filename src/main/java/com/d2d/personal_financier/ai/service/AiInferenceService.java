@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.ai.service;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AiResponse;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiResponse;
 import com.d2d.personal_financier.provider.ai.AiProvider;
 import com.d2d.personal_financier.provider.ai.AiProviderFactory;
 import lombok.RequiredArgsConstructor;

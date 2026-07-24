@@ -1,6 +1,6 @@
 package com.d2d.personal_financier.ai.parser;
 
-import com.d2d.personal_financier.ai.agent.analytics.model.AiResponse;
+import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
