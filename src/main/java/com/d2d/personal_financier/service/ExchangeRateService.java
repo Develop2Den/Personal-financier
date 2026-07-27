@@ -135,4 +135,15 @@ public class ExchangeRateService {
                 )
             );
     }
+
+    public List<ExchangeRateDto> getAllExchangeRates() {
+
+        return providers.stream()
+            .map(ExchangeRateProvider::getSource)
+            .distinct()
+            .flatMap(source ->
+                getExchangeRates(source).stream()
+            )
+            .toList();
+    }
 }

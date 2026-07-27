@@ -1,14 +1,19 @@
 package com.d2d.personal_financier.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 @Configuration
 public class CurrencyConfig {
 
     @Bean
-    public RestClient currencyRestClient(RestClient.Builder builder) {
-        return builder.build();
+    public RestClient currencyRestClient(
+        RestClient.Builder builder,
+        @Qualifier("outboundHttpRequestFactory") ClientHttpRequestFactory requestFactory
+    ) {
+        return builder.requestFactory(requestFactory).build();
     }
 }

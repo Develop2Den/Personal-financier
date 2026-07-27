@@ -75,13 +75,13 @@ public class RefreshTokenService {
         }
 
         LocalDateTime usedAt = LocalDateTime.now();
-        int consumedTokens = refreshTokenRepository.revokeIfNotRevoked(
+        int affectedRows = refreshTokenRepository.revokeIfNotRevoked(
             tokenHash,
             usedAt,
             usedAt
         );
 
-        if (consumedTokens != 1) {
+        if (affectedRows != 1) {
             auditService.log(TOKEN_REFRESH, FAILED, currentToken.getOwner(), currentToken.getOwner().getUsername(), "Revoked refresh token reuse");
             throw new InvalidRefreshTokenException();
         }

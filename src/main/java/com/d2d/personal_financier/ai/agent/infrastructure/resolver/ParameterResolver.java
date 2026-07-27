@@ -5,6 +5,7 @@ import com.d2d.personal_financier.ai.agent.agents.analytics.model.AiIntent;
 import com.d2d.personal_financier.ai.agent.agents.analytics.model.AnalyticsParameters;
 import com.d2d.personal_financier.ai.agent.agents.budget.model.BudgetParameters;
 import com.d2d.personal_financier.ai.agent.agents.category.model.CategoryParameters;
+import com.d2d.personal_financier.ai.agent.agents.currency.model.CurrencyParameters;
 import com.d2d.personal_financier.ai.agent.agents.goal.model.GoalParameters;
 import com.d2d.personal_financier.ai.agent.agents.transaction.model.TransactionParameters;
 import com.d2d.personal_financier.ai.agent.infrastructure.model.AgentParameters;
@@ -49,9 +50,12 @@ public class ParameterResolver {
                 parameters,
                 CategoryParameters.class
             );
+            case CURRENCY -> aiJsonParser.convert(
+                parameters,
+                CurrencyParameters.class
+            );
 
-            case CURRENCY,
-                 SYSTEM -> throw new UnsupportedOperationException(
+            case SYSTEM -> throw new UnsupportedOperationException(
                 "Parameters are not supported for intent: " + intent
             );
         };

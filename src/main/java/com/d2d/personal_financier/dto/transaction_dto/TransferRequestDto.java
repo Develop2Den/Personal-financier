@@ -2,6 +2,7 @@ package com.d2d.personal_financier.dto.transaction_dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -25,6 +26,7 @@ public record TransferRequestDto(
 
         @NotNull(message = "Amount is required")
         @DecimalMin(value = "0.01", inclusive = true, message = "Amount must be greater than 0")
+        @Digits(integer = 10, fraction = 2, message = "Amount must have at most 10 integer digits and 2 decimal places")
         @Schema(description = "Transfer amount", example = "150.00")
         BigDecimal amount,
 

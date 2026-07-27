@@ -4,6 +4,7 @@ import com.d2d.personal_financier.entity.enums.BudgetPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -20,6 +21,7 @@ public record BudgetRequestDto(
 
         @NotNull(message = "Budget limit is required")
         @DecimalMin(value = "0.01", inclusive = true, message = "Budget limit must be greater than 0")
+        @Digits(integer = 10, fraction = 2, message = "Budget limit must have at most 10 integer digits and 2 decimal places")
         @Schema(description = "Budget limit amount", example = "500.00")
         BigDecimal limitAmount,
 

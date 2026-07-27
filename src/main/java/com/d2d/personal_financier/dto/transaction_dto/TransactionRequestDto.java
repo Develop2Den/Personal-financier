@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.d2d.personal_financier.entity.enums.TransactionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -15,6 +16,7 @@ public record TransactionRequestDto(
 
         @NotNull(message = "Amount is required")
         @DecimalMin(value = "0.01", inclusive = true, message = "Amount must be greater than 0")
+        @Digits(integer = 10, fraction = 2, message = "Amount must have at most 10 integer digits and 2 decimal places")
         @Schema(description = "Transaction amount", example = "250.50")
         BigDecimal amount,
 

@@ -4,6 +4,7 @@ import com.d2d.personal_financier.entity.enums.AccountType;
 import com.d2d.personal_financier.entity.enums.Currency;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -24,6 +25,7 @@ public record AccountRequestDto(
 
     @NotNull(message = "Balance is required")
     @DecimalMin(value = "0.00", inclusive = true, message = "Balance must be greater than or equal to 0")
+    @Digits(integer = 10, fraction = 2, message = "Balance must have at most 10 integer digits and 2 decimal places")
     @Schema(description = "Initial account balance", example = "1000.00")
     BigDecimal balance,
 

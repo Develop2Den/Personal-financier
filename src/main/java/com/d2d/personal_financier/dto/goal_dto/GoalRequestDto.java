@@ -2,6 +2,7 @@ package com.d2d.personal_financier.dto.goal_dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,7 @@ public record GoalRequestDto(
 
         @NotNull(message = "Target amount is required")
         @DecimalMin(value = "0.01", inclusive = true, message = "Target amount must be greater than 0")
+        @Digits(integer = 10, fraction = 2, message = "Target amount must have at most 10 integer digits and 2 decimal places")
         @Schema(description = "Target amount to reach", example = "2000.00")
         BigDecimal targetAmount,
 
